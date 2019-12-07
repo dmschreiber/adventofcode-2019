@@ -2,7 +2,7 @@ package com.schreibersolutions;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public void dec5() {
         IntcodeComputer computer = new IntcodeComputer();
         //computer.program = new int[] {3,0,4,0,99};
         computer.program = new int[] {1002,4,3,4,33};
@@ -12,6 +12,16 @@ public class Main {
 
         computer.run();
 
-        // write your code here
+    }
+
+    public void dec6() {
+        
+    }
+
+    public static void main(String[] args) {
+        Main m = new Main();
+
+        m.dec6();
+
     }
 }
