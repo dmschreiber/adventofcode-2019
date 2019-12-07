@@ -1,5 +1,7 @@
 package com.schreibersolutions;
 
+import com.sun.tools.internal.jxc.ap.Const;
+
 public class Main {
 
     public void dec5() {
@@ -13,7 +15,10 @@ public class Main {
     }
 
     public void dec6() {
+        String map = Constants.orbit_map;
 
+        OrbitMap m = new OrbitMap(map);
+        System.out.println(m.countOrbits());
     }
 
     public static void main(String[] args) {
