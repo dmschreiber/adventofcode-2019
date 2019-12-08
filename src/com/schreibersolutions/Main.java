@@ -1,6 +1,7 @@
 package com.schreibersolutions;
 
 import com.sun.tools.internal.jxc.ap.Const;
+import sun.applet.AppletListener;
 
 public class Main {
 
@@ -19,12 +20,30 @@ public class Main {
 
         OrbitMap m = new OrbitMap(map);
         System.out.println(m.countOrbits());
+        m.myOrbtalPath();
+        m.santaOrbitalPath();
+        System.out.println(m.findCommonPlace());
+
+    }
+
+    public void dec7() {
+
+        Amplifier amp = new Amplifier(Constants.test_program3);
+        amp.phaseSetting[0] = 1;
+        amp.phaseSetting[1] = 0;
+        amp.phaseSetting[2] = 4;
+        amp.phaseSetting[3] = 3;
+        amp.phaseSetting[4] = 2;
+
+        amp.run();
+        System.out.println(amp.ampOutput);
+
     }
 
     public static void main(String[] args) {
         Main m = new Main();
 
-        m.dec6();
+        m.dec7();
 
     }
 }

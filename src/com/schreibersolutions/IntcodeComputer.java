@@ -1,5 +1,6 @@
 package com.schreibersolutions;
 import java.util.Scanner;
+import java.util.Stack;
 
 /**
  * Created by dschreiber on 12/7/19.
@@ -7,9 +8,13 @@ import java.util.Scanner;
 public class IntcodeComputer {
     public int result = 0;
     public int offset = 0;
-    int offsetIndex = 0;
-
+    public boolean isInteractive = true;
     public int[] program = {};
+
+    public Stack<Integer> inputs = new Stack<Integer>();
+    public Stack<Integer> outputs = new Stack<Integer>();
+
+    int offsetIndex = 0;
 
     public void init() {
         result = 0;
@@ -51,10 +56,16 @@ public class IntcodeComputer {
             } else if (opCode == 3) {
                 // input
                 arg1 = program[offsetIndex + 1];
-                Scanner scanner = new Scanner(System.in);
+                int number;
 
-                String input = scanner.nextLine();
-                int number = Integer.parseInt(input);
+                if (isInteractive) {
+                    Scanner scanner = new Scanner(System.in);
+
+                    String input = scanner.nextLine();
+                    number = Integer.parseInt(input);
+                } else {
+                    number = inputs.pop();
+                }
                 program[arg1] = number;
 
                 offset = 2;
@@ -63,7 +74,12 @@ public class IntcodeComputer {
             } else if (opCode == 4) {
                 // output
                 arg1 = (arg1_type == 0) ? program[program[offsetIndex + 1]] : program[offsetIndex + 1];
-                System.out.println(arg1);
+
+                if (isInteractive) {
+                    System.out.println(arg1);
+                } else {
+                    outputs.push(arg1);
+                }
                 offset = 2;
                 offsetIndex += offset;
 

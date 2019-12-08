@@ -4,4 +4,31 @@ package com.schreibersolutions;
  * Created by dschreiber on 12/8/19.
  */
 public class Amplifier {
+
+    private int[] myProgram;
+    private IntcodeComputer[] computer = new IntcodeComputer[5];
+    public int[] phaseSetting = new int[5];
+    public int ampOutput = -1;
+
+    Amplifier(int[] program) {
+        myProgram = program;
+        for (int index = 0; index < computer.length; index++) {
+            computer[index] = new IntcodeComputer();
+            computer[index].program = myProgram.clone();
+            computer[index].isInteractive = false;
+
+        }
+    }
+
+    public void run() {
+        int output = 0;
+
+        for (int index = 0; index < computer.length; index++) {
+            computer[index].inputs.push(output);
+            computer[index].inputs.push(phaseSetting[index]);
+            computer[index].run();
+            output = computer[index].outputs.pop();
+        }
+        ampOutput = output;
+    }
 }
