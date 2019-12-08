@@ -28,15 +28,47 @@ public class Main {
 
     public void dec7() {
 
-        Amplifier amp = new Amplifier(Constants.test_program3);
-        amp.phaseSetting[0] = 1;
-        amp.phaseSetting[1] = 0;
-        amp.phaseSetting[2] = 4;
-        amp.phaseSetting[3] = 3;
-        amp.phaseSetting[4] = 2;
+        int maxOutput = -1;
+        int[] maxSettings = new int[5];
 
-        amp.run();
-        System.out.println(amp.ampOutput);
+        // (0,1,2,3,4)
+        for (int a = 0; a < 5; a++) {
+            for (int b = 0; b < 5; b++) {
+                if (a != b) {
+                    for (int c = 0; c < 5; c++) {
+                        if ((c != b) && (c != a) ) {
+                            for (int d = 0; d < 5; d++) {
+                                if ((d != c) && (d != b) && (d != a)) {
+                                    for (int e = 0; e < 5; e++) {
+                                        if ((e != d) && (e != c) && (e != b) && (e != a)) {
+                                            Amplifier amp = new Amplifier(Constants.test_program);
+                                            amp.phaseSetting[0] = a;
+                                            amp.phaseSetting[1] = b;
+                                            amp.phaseSetting[2] = c;
+                                            amp.phaseSetting[3] = d;
+                                            amp.phaseSetting[4] = e;
+                                            amp.run();
+                                            if (amp.ampOutput > maxOutput) {
+                                                maxOutput = amp.ampOutput;
+                                                maxSettings = amp.phaseSetting.clone();
+                                            }
+
+
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int index = 0; index < maxSettings.length; index++) {
+            System.out.println(maxSettings[index]);
+        }
+        System.out.println(maxOutput);
 
     }
 
