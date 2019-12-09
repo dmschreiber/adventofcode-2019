@@ -5,13 +5,13 @@ package com.schreibersolutions;
  */
 public class Amplifier {
 
-    private int[] myProgram;
+    private long[] myProgram;
     private IntcodeComputer[] computer = new IntcodeComputer[5];
-    public int[] phaseSetting = new int[5];
-    public int ampOutput = -1;
+    public long[] phaseSetting = new long[5];
+    public long ampOutput = -1;
     public boolean isFeedback = false;
 
-    Amplifier(int[] program) {
+    Amplifier(long[] program) {
         myProgram = program.clone();
         for (int index = 0; index < computer.length; index++) {
             computer[index] = new IntcodeComputer();
@@ -23,7 +23,7 @@ public class Amplifier {
     }
 
     private void runFeedback() {
-        int output = 0;
+        long output = 0;
         boolean firstCycle = true;
 
         while (firstCycle || computer[0].isRunning || computer[1].isRunning || computer[2].isRunning || computer[3].isRunning || computer[4].isRunning) {
@@ -47,7 +47,7 @@ public class Amplifier {
     }
 
     private void runNoFeedback() {
-        int output = 0;
+        long output = 0;
 
         for (int index = 0; index < computer.length; index++) {
             computer[index].inputs.push(output);

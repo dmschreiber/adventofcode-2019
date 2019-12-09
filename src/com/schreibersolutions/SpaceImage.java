@@ -11,6 +11,7 @@ public class SpaceImage {
     private int myWidth, myHeight;
     public int layerCount = 0;
 
+    // an image is composed of many layers
     public class Layer {
         public int[][] values;
         private String myData;

@@ -46,9 +46,13 @@ public class Main {
         image.displayImage();
     }
 
+    public void dec9() {
+
+    }
+
     public static void main(String[] args) {
         Main m = new Main();
-
+        m.dec7();
         m.dec8();
 
     }

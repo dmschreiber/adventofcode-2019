@@ -4,13 +4,13 @@ package com.schreibersolutions;
  * Created by dschreiber on 12/8/19.
  */
 public class AmplifierSolver {
-    public int[] maxSettings = new int[5];
-    public int maxOutput = -1;
+    public long[] maxSettings = new long[5];
+    public long maxOutput = -1;
     private int rangeLow = 0;
     private int rangeHigh = 0;
-    private int[] myProgram;
+    private long[] myProgram;
 
-    public AmplifierSolver(int[] program, int lowPhaseRange, int highPhaseRange) {
+    public AmplifierSolver(long[] program, int lowPhaseRange, int highPhaseRange) {
         myProgram = program;
         rangeLow = lowPhaseRange;
         rangeHigh = highPhaseRange;
