@@ -28,51 +28,14 @@ public class Main {
 
     public void dec7() {
 
-        int maxOutput = -1;
-        int[] maxSettings = new int[5];
+        AmplifierSolver solver = new AmplifierSolver(Constants.dec7_puzzleinput, 5, 10);
 
-        // try unique combinations of (0,1,2,3,4)
-        int rangeLow = 5;
-        int rangeHigh = 10;
-
-        for (int a = rangeLow; a < rangeHigh; a++) {
-            for (int b = rangeLow; b < rangeHigh; b++) {
-                if (a != b) {
-                    for (int c = rangeLow; c < rangeHigh; c++) {
-                        if ((c != b) && (c != a) ) {
-                            for (int d = rangeLow; d < rangeHigh; d++) {
-                                if ((d != c) && (d != b) && (d != a)) {
-                                    for (int e = rangeLow; e < rangeHigh; e++) {
-                                        if ((e != d) && (e != c) && (e != b) && (e != a)) {
-                                            Amplifier amp = new Amplifier(Constants.test_feedbackprogram2);
-                                            amp.isFeedback = true;
-                                            amp.phaseSetting[0] = a;
-                                            amp.phaseSetting[1] = b;
-                                            amp.phaseSetting[2] = c;
-                                            amp.phaseSetting[3] = d;
-                                            amp.phaseSetting[4] = e;
-                                            amp.run();
-                                            if (amp.ampOutput > maxOutput) {
-                                                maxOutput = amp.ampOutput;
-                                                maxSettings = amp.phaseSetting.clone();
-                                            }
-
-
-
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        solver.findMaxOutput();
+        
+        for (int index = 0; index < solver.maxSettings.length; index++) {
+            System.out.println(solver.maxSettings[index]);
         }
-
-        for (int index = 0; index < maxSettings.length; index++) {
-            System.out.println(maxSettings[index]);
-        }
-        System.out.println(maxOutput);
+        System.out.println(solver.maxOutput);
 
     }
 

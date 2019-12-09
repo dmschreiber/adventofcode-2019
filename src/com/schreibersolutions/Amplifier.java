@@ -12,7 +12,7 @@ public class Amplifier {
     public boolean isFeedback = false;
 
     Amplifier(int[] program) {
-        myProgram = program;
+        myProgram = program.clone();
         for (int index = 0; index < computer.length; index++) {
             computer[index] = new IntcodeComputer();
             computer[index].program = myProgram.clone();
