@@ -47,13 +47,31 @@ public class Main {
     }
 
     public void dec9() {
+        IntcodeComputer computer;
+
+//        computer = new IntcodeComputer();
+//        computer.program = Constants.dec9_output_largenumber;
+//        computer.run();
+//
+//        computer = new IntcodeComputer();
+//        computer.program = Constants.dec9_output_sixteendigits;
+//        computer.run();
+
+//        computer = new IntcodeComputer();
+//        computer.program = Constants.dec9_relative_testprogram;
+//        computer.run();
+
+        computer = new IntcodeComputer();
+        computer.program = Constants.dec9_puzzleinput;
+        computer.isInteractive = false;
+        computer.inputs.push(1L);
+        computer.run();
 
     }
 
     public static void main(String[] args) {
         Main m = new Main();
-        m.dec7();
-        m.dec8();
+        m.dec9();
 
     }
 }
