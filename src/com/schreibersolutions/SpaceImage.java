@@ -83,17 +83,23 @@ public class SpaceImage {
     public int getColor(int x, int y) {
 
         int color = 2;
-        for (int whichLayer = 0; (whichLayer < layers.length) && (color >= 2); whichLayer++) {
+        int whichLayer;
+        for (whichLayer = 0; (whichLayer < layers.length) && (color >= 2); whichLayer++) {
             color = layers[whichLayer].values[x][y];
-
         }
+        whichLayer = whichLayer;
         return color;
     }
 
     public void displayImage() {
         for (int y = 0; y < myHeight; y++) {
             for (int x = 0; x < myWidth; x++) {
-                System.out.print(getColor(x,y));
+                int color = getColor(x,y);
+                if (color == 0) {
+                    System.out.print(" ");
+                } else {
+                    System.out.print("\u2588");
+                }
             }
             System.out.println();
         }

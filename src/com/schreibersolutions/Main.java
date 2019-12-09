@@ -40,7 +40,6 @@ public class Main {
     }
 
     public void dec8() {
-//        SpaceImage image = new SpaceImage("123456789012",3,2);
         SpaceImage image = new SpaceImage(Constants.dec8_puzzleinput, 25,6);
         int fewestZeros = image.whichLayerHasFewestZeros();
         System.out.println(image.quotientCount(fewestZeros,1,2));
