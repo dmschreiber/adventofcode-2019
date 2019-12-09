@@ -31,17 +31,21 @@ public class Main {
         int maxOutput = -1;
         int[] maxSettings = new int[5];
 
-        // (0,1,2,3,4)
-        for (int a = 0; a < 5; a++) {
-            for (int b = 0; b < 5; b++) {
+        // try unique combinations of (0,1,2,3,4)
+        int rangeLow = 5;
+        int rangeHigh = 10;
+
+        for (int a = rangeLow; a < rangeHigh; a++) {
+            for (int b = rangeLow; b < rangeHigh; b++) {
                 if (a != b) {
-                    for (int c = 0; c < 5; c++) {
+                    for (int c = rangeLow; c < rangeHigh; c++) {
                         if ((c != b) && (c != a) ) {
-                            for (int d = 0; d < 5; d++) {
+                            for (int d = rangeLow; d < rangeHigh; d++) {
                                 if ((d != c) && (d != b) && (d != a)) {
-                                    for (int e = 0; e < 5; e++) {
+                                    for (int e = rangeLow; e < rangeHigh; e++) {
                                         if ((e != d) && (e != c) && (e != b) && (e != a)) {
-                                            Amplifier amp = new Amplifier(Constants.test_program);
+                                            Amplifier amp = new Amplifier(Constants.test_feedbackprogram2);
+                                            amp.isFeedback = true;
                                             amp.phaseSetting[0] = a;
                                             amp.phaseSetting[1] = b;
                                             amp.phaseSetting[2] = c;

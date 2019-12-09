@@ -10,6 +10,7 @@ public class IntcodeComputer {
     public int offset = 0;
     public boolean isInteractive = true;
     public int[] program = {};
+    public boolean isRunning = false;
 
     public Stack<Integer> inputs = new Stack<Integer>();
     public Stack<Integer> outputs = new Stack<Integer>();
@@ -31,9 +32,12 @@ public class IntcodeComputer {
         arg1_type = ((program[offsetIndex]/100) % 10);
         arg2_type = ((program[offsetIndex]/1000) % 10);
 
-        if (opCode == 99) {
+        if ((opCode == 3) && (inputs.size() == 0) && !(isInteractive)) {
+            offset = -2;
+        } else if (opCode == 99) {
             // exit
             offset = -1;
+            isRunning = false;
         } else {
 
             if ((opCode == 1) || (opCode == 2)) {
@@ -127,12 +131,21 @@ public class IntcodeComputer {
         }
     }
 
+    public void resume() {
+
+        if (isRunning) {
+            offset = 0;
+            while (offset >= 0) {
+                performOpCode();
+            }
+        }
+    }
+
     public void run() {
         offsetIndex = 0;
+        isRunning = true;
 
-        while (offset >= 0) {
-            performOpCode();
-        }
+        resume();
 
         result = program[0];
     }
