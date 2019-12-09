@@ -8,6 +8,7 @@ import sun.jvm.hotspot.memory.Space;
 public class SpaceImage {
     private String myData;
     private Layer[] layers;
+    private int myWidth, myHeight;
     public int layerCount = 0;
 
     public class Layer {
@@ -34,6 +35,8 @@ public class SpaceImage {
 
     SpaceImage(String data, int width, int height) {
         myData = data;
+        myWidth = width;
+        myHeight = height;
 
         layerCount = data.length() / (width*height);
 
@@ -66,6 +69,7 @@ public class SpaceImage {
 
         for (int whichLayer = 0; whichLayer < layers.length; whichLayer++) {
             if (countSpecificDigit(whichLayer,0) < minZeros) {
+                minZeros = countSpecificDigit(whichLayer,0);
                 retval = whichLayer;
             }
         }
@@ -74,5 +78,24 @@ public class SpaceImage {
 
     public int quotientCount(int whichLayer, int digit1, int digit2) {
         return countSpecificDigit(whichLayer,digit1) * countSpecificDigit(whichLayer,digit2);
+    }
+
+    public int getColor(int x, int y) {
+
+        int color = 2;
+        for (int whichLayer = 0; (whichLayer < layers.length) && (color >= 2); whichLayer++) {
+            color = layers[whichLayer].values[x][y];
+
+        }
+        return color;
+    }
+
+    public void displayImage() {
+        for (int y = 0; y < myHeight; y++) {
+            for (int x = 0; x < myWidth; x++) {
+                System.out.print(getColor(x,y));
+            }
+            System.out.println();
+        }
     }
 }
