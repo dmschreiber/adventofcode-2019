@@ -64,8 +64,11 @@ public class Main {
         computer = new IntcodeComputer();
         computer.program = Constants.dec9_puzzleinput;
         computer.isInteractive = false;
-        computer.inputs.push(1L);
+        computer.inputs.push(2L);
         computer.run();
+        for (long o : computer.outputs) {
+            System.out.println(o);
+        }
 
     }
 
