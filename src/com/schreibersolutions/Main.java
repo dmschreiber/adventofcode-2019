@@ -61,12 +61,26 @@ public class Main {
     }
 
     public void dec10() {
+        AsteroidMap m;
+//        m = new AsteroidMap(Constants.dec10_test1);
+//        m.solver();
+//        m = new AsteroidMap(Constants.dec10_test2);
+//        m.solver();
+//        m = new AsteroidMap(Constants.dec10_test3);
+//        m.solver();
+//        m = new AsteroidMap(Constants.dec10_test4);
+//        m.solver();
+//        m = new AsteroidMap(Constants.dec10_test5);
+//        m.solver();
+        m = new AsteroidMap(Constants.dec10_puzzleinput);
+        m.solver();
+
 
     }
 
     public static void main(String[] args) {
         Main m = new Main();
-        m.dec9();
+        m.dec10();
 
     }
 }
