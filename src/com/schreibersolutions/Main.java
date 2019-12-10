@@ -49,17 +49,6 @@ public class Main {
     public void dec9() {
         IntcodeComputer computer;
 
-//        computer = new IntcodeComputer();
-//        computer.program = Constants.dec9_output_largenumber;
-//        computer.run();
-//
-//        computer = new IntcodeComputer();
-//        computer.program = Constants.dec9_output_sixteendigits;
-//        computer.run();
-
-//        computer = new IntcodeComputer();
-//        computer.program = Constants.dec9_relative_testprogram;
-//        computer.run();
 
         computer = new IntcodeComputer();
         computer.program = Constants.dec9_puzzleinput;
