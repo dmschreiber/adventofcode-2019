@@ -85,7 +85,6 @@ public class IntcodeComputer {
                 if (opCode == 2) {
                     program[(int) arg3] = arg1 * arg2;
                 }
-                offsetIndex += offset;
 
             } else if (opCode == 3) {
                 // input
@@ -104,7 +103,6 @@ public class IntcodeComputer {
                 program[(int) arg1] = number;
 
                 offset = 2;
-                offsetIndex += offset;
 
             } else if (opCode == 4) {
                 // output
@@ -116,7 +114,6 @@ public class IntcodeComputer {
                     outputs.push(arg1);
                 }
                 offset = 2;
-                offsetIndex += offset;
 
             } else if ((opCode == 5) || (opCode == 6)) {
                 // jump to true & false
@@ -127,14 +124,12 @@ public class IntcodeComputer {
                 if (opCode == 5) {
                     if (arg1 != 0) {
                         offsetIndex = (int) arg2;
-                    } else {
-                        offsetIndex += offset;
+                        offset = 0;
                     }
                 } else if (opCode == 6) {
                     if (arg1 == 0) {
                         offsetIndex = (int) arg2;
-                    } else {
-                        offsetIndex += offset;
+                        offset = 0;
                     }
                 }
             } else if ((opCode == 7) || (opCode == 8)) {
@@ -158,13 +153,13 @@ public class IntcodeComputer {
                         program[(int) arg3] = 0;
                     }
                 }
-                offsetIndex += offset;
             } else if (opCode == 9) { // adjust relative base
                 offset = 2;
                 arg1 = getArgument(arg1_type, program[offsetIndex+1]);
                 relativeBase += arg1;
-                offsetIndex += offset;
             }
+            offsetIndex += offset;
+
         }
     }
 

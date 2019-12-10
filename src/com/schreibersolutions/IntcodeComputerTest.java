@@ -34,5 +34,14 @@ class IntcodeComputerTest {
         computer.isInteractive = false;
         computer.run();
 //        assertEquals(makeString(Constants.dec9_relative_testprogram),makeString(a) );
+
+        computer = new IntcodeComputer();
+        computer.program = Constants.dec9_puzzleinput;
+        computer.isInteractive = false;
+        computer.inputs.push(2L);
+        computer.run();
+        assertEquals(50120L,computer.outputs.get(0));
+
+
     }
 }
