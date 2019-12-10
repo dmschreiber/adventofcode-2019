@@ -4,6 +4,8 @@ package com.schreibersolutions;
  * Created by dschreiber on 12/7/19.
  */
 public class Constants {
+    public static String dec10_puzzleinput = "";
+
     public static long[] dec9_relative_testprogram = {109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99};
     public static long[] dec9_output_sixteendigits = {1102,34915192,34915192,7,4,7,99,0};
     public static long[] dec9_output_largenumber = {104,1125899906842624L,99};

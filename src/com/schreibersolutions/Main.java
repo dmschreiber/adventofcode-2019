@@ -49,7 +49,6 @@ public class Main {
     public void dec9() {
         IntcodeComputer computer;
 
-
         computer = new IntcodeComputer();
         computer.program = Constants.dec9_puzzleinput;
         computer.isInteractive = false;
@@ -58,6 +57,10 @@ public class Main {
         for (long o : computer.outputs) {
             System.out.println(o);
         }
+
+    }
+
+    public void dec10() {
 
     }
 

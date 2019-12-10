@@ -61,7 +61,7 @@ public class IntcodeComputer {
         arg2_type = ((program[offsetIndex]/1000) % 10);
         arg3_type = ((program[offsetIndex]/10000) % 10);
 
-        if ((opCode == 3) && (inputs.size() == 0) && !(isInteractive)) {
+        if ((opCode == 3) && (inputs.size() == 0) && !(isInteractive)) { // suspend until we get input and resume
             offset = -2;
         } else if (opCode == 99) {
             // exit
@@ -76,14 +76,13 @@ public class IntcodeComputer {
                 arg2 = getArgument(arg2_type, program[offsetIndex+2]);
                 arg3 = (arg3_type == 0) ? program[offsetIndex + 3] : program[offsetIndex + 3] + relativeBase;
 
+                checkMemoryBounds((int) arg3);
                 if (opCode == 1) {
-                    checkMemoryBounds((int) (int) arg3);
                     program[(int) arg3] = arg1 + arg2;
 
                 }
 
                 if (opCode == 2) {
-                    checkMemoryBounds((int) (int) arg3);
                     program[(int) arg3] = arg1 * arg2;
                 }
                 offsetIndex += offset;
@@ -145,20 +144,17 @@ public class IntcodeComputer {
                 arg2 = getArgument(arg2_type, program[offsetIndex+2]);
                 arg3 = (arg3_type == 0) ? program[offsetIndex + 3] : program[offsetIndex + 3] + relativeBase;
 
+                checkMemoryBounds((int) arg3);
                 if (opCode == 7) {
                     if (arg1 < arg2) {
-                        checkMemoryBounds((int) (int) arg3);
                         program[(int) arg3] = 1;
                     } else {
-                        checkMemoryBounds((int) (int) arg3);
                         program[(int) arg3] = 0;
                     }
                 } else if (opCode == 8) {
                     if (arg1 == arg2) {
-                        checkMemoryBounds((int) (int) arg3);
                         program[(int) arg3] = 1;
                     } else {
-                        checkMemoryBounds((int) (int) arg3);
                         program[(int) arg3] = 0;
                     }
                 }
@@ -183,6 +179,7 @@ public class IntcodeComputer {
     }
 
     public void run() {
+
         offsetIndex = 0;
         isRunning = true;
 

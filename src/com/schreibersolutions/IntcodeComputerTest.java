@@ -29,10 +29,10 @@ class IntcodeComputerTest {
         computer.run();
         assertEquals(1219070632396864L,computer.outputs.get(0));
 
-//        computer = new IntcodeComputer();
-//        computer.program = Constants.dec9_relative_testprogram;
-//        computer.isInteractive = false;
-//        computer.run();
+        computer = new IntcodeComputer();
+        computer.program = Constants.dec9_relative_testprogram;
+        computer.isInteractive = false;
+        computer.run();
 //        assertEquals(makeString(Constants.dec9_relative_testprogram),makeString(a) );
     }
 }
