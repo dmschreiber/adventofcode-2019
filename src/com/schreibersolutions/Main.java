@@ -73,8 +73,8 @@ public class Main {
 //        m = new AsteroidMap(Constants.dec10_test5);
 //        m.solver();
         m = new AsteroidMap(Constants.dec10_puzzleinput);
-        m.solver();
-
+        m.bestLocationSolver();
+        m.laserSweep();
 
     }
 
