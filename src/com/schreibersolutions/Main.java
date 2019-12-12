@@ -78,9 +78,18 @@ public class Main {
 
     }
 
+    public void dec11() {
+        Surface h = new Surface(0); // default all black
+
+        HullPaintingRobot robot = new HullPaintingRobot(Constants.dec11_puzzleinput);
+        h.setColor(0,0,1);
+        robot.paint(h);
+        System.out.println(h.paintedPanelCount);
+        h.displaySurface();
+    }
     public static void main(String[] args) {
         Main m = new Main();
-        m.dec10();
+        m.dec11();
 
     }
 }
