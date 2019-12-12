@@ -42,8 +42,8 @@ public class Surface {
 
     public void displaySurface() {
         System.out.printf("%d to %d, %d to %d\n", lowerY, upperY, lowerX, upperX);
-        for (int y = upperY; y > lowerY-1;y--) {
-            for (int x = lowerX; x < upperX+1;x++) {
+        for (int y = upperY+1; y > lowerY-2;y--) {
+            for (int x = lowerX-1; x < upperX+2;x++) {
                 if (getColor(x,y) == 0) {
                     System.out.print(" ");
                 } else {

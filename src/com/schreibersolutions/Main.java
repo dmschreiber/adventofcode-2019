@@ -87,9 +87,32 @@ public class Main {
         System.out.println(h.paintedPanelCount);
         h.displaySurface();
     }
+
+    public void dec12() {
+        Space space = new Space();
+        Moon moons[] = space.generateMoons(4);
+        int[][] positions =  {
+//  <x=13, y=9, z=5>
+//<x=8, y=14, z=-2>
+//<x=-5, y=4, z=11>
+//<x=2, y=-6, z=1>
+                {13,9,5},
+                {8,14,-2},
+                {-5,4,11},
+                {2,-6,1} };
+
+        for (int index = 0; index < positions.length; index++) {
+            moons[index].setPosition(positions[index][0], positions[index][1], positions[index][2]);
+        }
+
+        space.timeLapse(1000);
+        System.out.println(space.totalEnergy());
+
+    }
+
     public static void main(String[] args) {
         Main m = new Main();
-        m.dec11();
+        m.dec12();
 
     }
 }
