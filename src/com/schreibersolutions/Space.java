@@ -2,19 +2,38 @@ package com.schreibersolutions;
 
 public class Space {
 
+    private int[][] initialState;
+
     public Moon[] moons;
 
-    public  Moon[] generateMoons(int number) {
+    public  Moon[] generateMoons(int number, int[][] positions) {
         moons = new Moon[number];
+
+        initialState = positions.clone();
 
         for (int index = 0; index < number; index++) {
             moons[index] = new Moon();
+            moons[index].setPosition(positions[index][0], positions[index][1], positions[index][2]);
         }
+
         return moons;
     }
 
     Space() {
 
+    }
+
+    public boolean isBackToInitialState(int dimensions) {
+        boolean retval = true;
+
+        for (int m1 = 0; m1 < moons.length; m1++) {
+                retval = retval && (moons[m1].position[dimensions] == initialState[m1][dimensions]);
+        }
+        return retval;
+    }
+
+    public boolean isBackToInitialState() {
+        return (isBackToInitialState(0) && isBackToInitialState(1) && isBackToInitialState(2));
     }
 
     public void applyGravity() {
@@ -63,6 +82,7 @@ public class Space {
         return energy;
     }
 
+
     public void timeLapse (int howMany) {
 
         for (int index = 0; index < howMany; index++) {
@@ -71,5 +91,50 @@ public class Space {
             applyGravity();
             updatePositions();
         }
+    }
+
+    public void findRepeat () {
+        long timeCount = 0;
+        boolean keepGoing = true;
+        long[] seeds = new long[3];
+
+        while (keepGoing) {
+            applyGravity();
+            updatePositions();
+            ++timeCount;
+            // if ((timeCount % 10000) == 0) System.out.println(timeCount);
+
+            if (isBackToInitialState(0)) {
+                System.out.printf("%d:%d %d\n", 0, timeCount, seeds[0]);
+                if (seeds[0] > 0) {
+                }
+                else {
+                    seeds[0] = timeCount+1;
+                }
+            }
+
+            if (isBackToInitialState(1)) {
+                System.out.printf("%d:%d %d\n", 1, timeCount, seeds[1]);
+                if (seeds[1] > 0) {
+                }
+                else {
+                    seeds[1] = timeCount+1;
+                }
+            }
+            if (isBackToInitialState(2)) {
+                System.out.printf("%d:%d %d\n", 2, timeCount, seeds[2]);
+                if (seeds[2] > 0) {
+                }
+                else {
+                    seeds[2] = timeCount+1;
+                }
+            }
+
+            keepGoing = ((seeds[0] == 0) || (seeds[1] == 0) || (seeds[2] == 0));
+        }
+
+        System.out.printf("<%d, %d, %d>\n", seeds[0], seeds[1], seeds[2]);
+
+
     }
 }
