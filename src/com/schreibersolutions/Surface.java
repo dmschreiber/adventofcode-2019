@@ -22,6 +22,10 @@ public class Surface {
         }
         return color;
     }
+    public static void clearScreen() {
+        System.out.print("\033[H");
+        System.out.flush();
+    }
 
     public void setColor(int x, int y, int color) {
         Pair<Integer,Integer> loc = new Pair(x,y);

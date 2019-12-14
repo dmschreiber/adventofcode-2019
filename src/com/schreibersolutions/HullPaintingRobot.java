@@ -13,7 +13,6 @@ public class HullPaintingRobot {
         computer.isInteractive = false;
 
     }
-
     public void paint(Surface s) {
         mySurface = s;
 
@@ -45,9 +44,14 @@ public class HullPaintingRobot {
                 --myX;
             }
 
-//            System.out.printf("Color %d, direction %d\n",newColor,direction);
-//            s.displaySurface();
-//            System.out.println("-----");
+            Surface.clearScreen();
+            System.out.printf("Color %d, direction %d\n",newColor,direction);
+            s.displaySurface();
+            try {
+                Thread.sleep(10);
+            } catch (Exception e) {
+
+            }
         }
     }
 }

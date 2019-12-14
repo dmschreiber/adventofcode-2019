@@ -11,6 +11,7 @@ public class IntcodeComputer {
     public boolean isInteractive = true;
     public long[] program = {};
     public boolean isRunning = false;
+    public boolean isAwaitingInput = false;
 
     public Stack<Long> inputs = new Stack<>();
     public Stack<Long> outputs = new Stack<>();
@@ -61,7 +62,11 @@ public class IntcodeComputer {
         arg2_type = ((program[offsetIndex]/1000) % 10);
         arg3_type = ((program[offsetIndex]/10000) % 10);
 
+        isAwaitingInput = false;
         if ((opCode == 3) && (inputs.size() == 0) && !(isInteractive)) { // suspend until we get input and resume
+            isAwaitingInput = true;
+            offset = -2;
+        } else if ((outputs.size() >= 3)) {
             offset = -2;
         } else if (opCode == 99) {
             // exit

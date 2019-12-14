@@ -99,10 +99,17 @@ public class Main {
         space.findRepeat();
 
     }
+    public void dec13() {
+        ArcadeCabinet c = new ArcadeCabinet(Constants.dec13_puzzleinput);
+
+        c.play();
+        System.out.println(c.countBlockTiles());
+
+    }
 
     public static void main(String[] args) {
         Main m = new Main();
-        m.dec12();
+        m.dec13();
 
     }
 }
