@@ -85,7 +85,7 @@ public class Main {
         h.setColor(0,0,1);
         robot.paint(h);
         System.out.println(h.paintedPanelCount);
-        h.displaySurface();
+       // h.displaySurface();
     }
 
     public void dec12() {
@@ -107,9 +107,16 @@ public class Main {
 
     }
 
+    public void dec14() {
+        Reactions r = new Reactions(Constants.dec14_test1);
+
+        System.out.println(r.computeOREforFUEL());
+
+    }
+
     public static void main(String[] args) {
         Main m = new Main();
-        m.dec13();
+        m.dec14();
 
     }
 }

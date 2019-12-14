@@ -4,6 +4,14 @@ package com.schreibersolutions;
  * Created by dschreiber on 12/7/19.
  */
 public class Constants {
+    public static String dec14_test1 = "9 ORE => 2 A\n" +
+            "8 ORE => 3 B\n" +
+            "7 ORE => 5 C\n" +
+            "3 A, 4 B => 1 AB\n" +
+            "5 B, 7 C => 1 BC\n" +
+            "4 C, 1 A => 1 CA\n" +
+            "2 AB, 3 BC, 4 CA => 1 FUEL";
+
     public static String dec10_test1 = ".#..#\n" +
             ".....\n" +
             "#####\n" +
