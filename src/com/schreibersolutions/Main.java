@@ -108,7 +108,7 @@ public class Main {
     }
 
     public void dec14() {
-        Reactions r = new Reactions(Constants.dec14_test2);
+        Reactions r = new Reactions(Constants.dec14_test1);
 
         System.out.println(r.computeOREforFUEL());
 

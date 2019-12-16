@@ -186,7 +186,7 @@ public class Reactions {
         boolean onlyORELeft = true;
         boolean computeORE = false;
 
-        while (nonOre) {
+        while (r.input_ingredients.size() > 1) {
             nonOre = false;
             for (int index = i_pos; index < r.input_ingredients.size(); index++) {
                 i = r.input_ingredients.get(index);
@@ -222,6 +222,8 @@ public class Reactions {
                     //                    ++i_pos;
                     //                }
                 }
+            } else {
+                ++i_pos;
             }
             r.print();
 
