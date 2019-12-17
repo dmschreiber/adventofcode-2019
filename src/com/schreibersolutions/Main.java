@@ -108,9 +108,9 @@ public class Main {
     }
 
     public void dec14() {
-        Reactions r = new Reactions(Constants.dec14_test1);
+        Reactions r = new Reactions(Constants.dec14_puzzleinput);
 
-        System.out.println(r.computeOREforFUEL());
+        r.computeOREforFUEL();
 
     }
 

@@ -62,7 +62,9 @@ public class Reactions {
             System.out.printf(" => ");
             for (Ingredient i : output_ingredients) System.out.printf("%d %s ", i.getAmount(), i.myType);
             System.out.printf(" <");
-            for (Ingredient i : leftover_ingredients) System.out.printf("%d %s ", i.getAmount(), i.myType);
+            if (leftover_ingredients.size() > 0) {
+                for (Ingredient i : leftover_ingredients) System.out.printf("%d %s ", i.getAmount(), i.myType);
+            }
             System.out.printf(">\n");
         }
 
@@ -80,15 +82,26 @@ public class Reactions {
             return new Reaction(this.base_input, this.base_output);
         }
     }
+    String reset_string = "";
 
     Reactions (String list) {
         String[] reaction_list = list.split("\n");
+        reset_string = list;
 
         for (String s : reaction_list) {
             reactions.add(new Reaction(s));
         }
     }
 
+    void reset() {
+        String[] reaction_list = reset_string.split("\n");
+        reactions.clear();
+
+        for (String s : reaction_list) {
+            reactions.add(new Reaction(s));
+        }
+
+    }
     public Reaction getReaction(String type, int amount) {
         Reaction r = getReaction(type);
 
@@ -109,6 +122,11 @@ public class Reactions {
         }
     }
 
+    public void print() {
+        for (Reaction local_r: reactions) {
+            local_r.print();
+        }
+    }
     public Ingredient getIngredient(ArrayList<Ingredient> ingredients, String type) {
         for (Ingredient i: ingredients) {
             if (i.myType.compareTo(type) == 0) {
@@ -130,7 +148,7 @@ public class Reactions {
 
     public Reaction getFuelReaction() {
         Reaction f = getReaction("FUEL");
-        f.print();
+//        f.print();
         return f;
     }
 
@@ -178,8 +196,7 @@ public class Reactions {
 //        }
 
     }
-    public int getORERequired(Reaction r) {
-        int ore = 0;
+    public void getORERequired(Reaction r) {
         Ingredient i= null;
         int i_pos = 0;
         boolean nonOre = true;
@@ -208,8 +225,7 @@ public class Reactions {
                 } else {
                     Reaction i_r = getReaction(i.myType, i.getAmount() - leftoverAmount);
                     ArrayList<Ingredient> i_i = i_r.input_ingredients;
-                    //                if ( (i_i.get(0).myType.compareTo(("ORE")) != 0)
-                    //                        || ((i_i.get(0).myType.compareTo("ORE") == 0) && computeORE) ) {
+
                     delete(r.leftover_ingredients, i.myType);
                     if (i_r.output_ingredients.get(0).getAmount() > (i.getAmount() - leftoverAmount)) {
                         System.out.printf("adding remainder %d %s\n", i_r.output_ingredients.get(0).getAmount() - (i.getAmount() - leftoverAmount), i.myType);
@@ -218,9 +234,6 @@ public class Reactions {
                     replace(r, i, i_i);
                     i_pos += i_i.size() - 1;
                     onlyORELeft = false;
-                    //                } else {
-                    //                    ++i_pos;
-                    //                }
                 }
             } else {
                 ++i_pos;
@@ -236,16 +249,31 @@ public class Reactions {
             }
         }
 
-        return ore;
     }
 
-    public int computeOREforFUEL() {
+    public void computeOREforFUEL() {
         int retval = 0;
+        long ore = 1000000000000L;
+        long fuel = 0;
+        ArrayList<Ingredient> leftovers = new ArrayList<>();
 
-        Reaction make_fuel = getFuelReaction();
+//        while (ore >= 0) {
+//            reset();
+            Reaction make_fuel = getFuelReaction().clone();
+//            make_fuel.leftover_ingredients = leftovers;
+//            make_fuel.print();
+            getORERequired(make_fuel);
 
-        retval = getORERequired(make_fuel);
+            ore -= make_fuel.input_ingredients.get(0).myAmount;
+            System.out.printf("Used %d ore to make Fuel: %d\n", make_fuel.input_ingredients.get(0).myAmount, fuel);
+            if (ore >= 0) {
+                ++fuel;
+//                if ((fuel % 10000) == 0) {System.out.print("."); }
+                leftovers = make_fuel.leftover_ingredients;
+//                make_fuel.print();
+            }
+//        }
+        System.out.printf("Fuel: %d\n", fuel);
 
-        return retval;
     }
 }

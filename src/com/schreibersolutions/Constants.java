@@ -111,7 +111,7 @@ public class Constants {
             "17 QVDFQ, 26 KDCG, 7 CHNX => 3 RTVFM\n" +
             "111 ORE => 6 KVWJG\n" +
             "3 ZTCM => 6 DKFT\n" +
-            "124 ORE => 6 NRBGS";
+            "124 ORE => 6 NRBGS\n";
 
 
     public static String dec10_test1 = ".#..#\n" +
