@@ -4,6 +4,15 @@ import com.sun.tools.internal.jxc.ap.Const;
 import sun.applet.AppletListener;
 
 public class Main {
+    public static final String ANSI_RESET = "\u001B[0m";
+    public static final String ANSI_BLACK = "\u001B[30m";
+    public static final String ANSI_RED = "\u001B[31m";
+    public static final String ANSI_GREEN = "\u001B[32m";
+    public static final String ANSI_YELLOW = "\u001B[33m";
+    public static final String ANSI_BLUE = "\u001B[34m";
+    public static final String ANSI_PURPLE = "\u001B[35m";
+    public static final String ANSI_CYAN = "\u001B[36m";
+    public static final String ANSI_WHITE = "\u001B[37m";
 
     public void dec5() {
         IntcodeComputer computer = new IntcodeComputer();
@@ -108,9 +117,36 @@ public class Main {
     }
 
     public void dec14() {
-        Reactions r = new Reactions(Constants.dec14_puzzleinput);
 
-        r.computeOREforFUEL();
+        Reactions r1 = new Reactions(Constants.dec14_test1);
+        long o1 = r1.computeOREforFUEL();
+        boolean testPassed1 = (o1 == 165);
+
+        Reactions r2 = new Reactions(Constants.dec14_test2);
+        long o2 = r2.computeOREforFUEL();
+        boolean testPassed2 = (o2 == 13312);
+
+        Reactions r3 = new Reactions(Constants.dec14_test3);
+        long o3 = r3.computeOREforFUEL();
+        boolean testPassed3 = (o3 == 180697);
+        r3.solver();
+
+        System.out.print("***TEST4\n");
+        Reactions r4 = new Reactions(Constants.dec14_test4);
+        long o4 = r4.computeOREforFUEL();
+        boolean testPassed4 = (o4 == 2210736);
+        r4.solver();
+
+        Reactions r5 = new Reactions(Constants.dec14_puzzleinput);
+        long o5 = r5.computeOREforFUEL();
+        boolean testPassed5 = (o5 == 1920219);
+        r5.solver();
+
+        System.out.printf((testPassed1 ? ANSI_RESET : ANSI_RED) + "Test1: %b\n", testPassed1);
+        System.out.printf((testPassed2 ? ANSI_RESET : ANSI_RED) + "Test2: %b\n", testPassed2);
+        System.out.printf((testPassed3 ? ANSI_RESET : ANSI_RED) + "Test3: %b\n", testPassed3);
+        System.out.printf((testPassed4 ? ANSI_RESET : ANSI_RED) + "Test4: %s\n", testPassed4);
+        System.out.printf((testPassed5 ? ANSI_RESET : ANSI_RED) + "Test5: %s\n", testPassed5);
 
     }
 

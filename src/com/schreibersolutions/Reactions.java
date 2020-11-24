@@ -1,23 +1,32 @@
 package com.schreibersolutions;
 
+import sun.management.jmxremote.SingleEntryRegistry;
 import sun.rmi.server.InactiveGroupException;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class Reactions {
+    boolean LOG = false;
+
     ArrayList<Reaction> reactions = new ArrayList<Reaction>();
 
-    class Ingredient {
+    class Ingredient implements Comparable {
         String myType;
-        int myAmount;
-        int multiplier = 1;
+        long myAmount;
+        long multiplier = 1;
 
-        public int getAmount() {
+        @Override
+        public int compareTo(Object o) {
+            return this.myType.compareTo(((Ingredient) o).myType);
+        }
+
+        public long getAmount() {
             return myAmount*multiplier;
         }
 
-        Ingredient (String type, int amount) {
+        Ingredient (String type, long amount) {
             myType = type;
             myAmount = amount;
         }
@@ -27,6 +36,9 @@ public class Reactions {
             myAmount = Integer.parseInt(descriptor.split(" ")[0]);
         }
 
+        boolean IsOre () {
+            return (myType.compareTo("ORE") == 0);
+        }
     }
 
     class Reaction {
@@ -35,7 +47,7 @@ public class Reactions {
         ArrayList<Ingredient> leftover_ingredients = new ArrayList<>();
 
         String base_input = "", base_output = "";
-        int multiplier = 1;
+        long multiplier = 1;
 
         private void setInputOutput(String inputs, String outputs) {
             base_input = inputs;
@@ -57,18 +69,32 @@ public class Reactions {
             setInputOutput(input, output);
         }
 
+
         public void print() {
+            if (!LOG) return;
             for (Ingredient i : input_ingredients) System.out.printf("%d %s ", i.getAmount(), i.myType);
             System.out.printf(" => ");
             for (Ingredient i : output_ingredients) System.out.printf("%d %s ", i.getAmount(), i.myType);
             System.out.printf(" <");
-            if (leftover_ingredients.size() > 0) {
-                for (Ingredient i : leftover_ingredients) System.out.printf("%d %s ", i.getAmount(), i.myType);
-            }
+            Collections.sort(leftover_ingredients);
+            for (Ingredient i : leftover_ingredients) System.out.printf("%d %s ", i.getAmount(), i.myType);
             System.out.printf(">\n");
         }
 
+        public void increaseMultiplier(long m) {
+            this.multiplier = m;
+            for (Ingredient i : input_ingredients) {
+                i.multiplier = m;
+            }
+
+            for (Ingredient i : output_ingredients) {
+                i.multiplier = m;
+            }
+
+        }
         public void increaseMultiplier() {
+            ++this.multiplier;
+
             for (Ingredient i : input_ingredients) {
                 ++i.multiplier;
             }
@@ -102,7 +128,7 @@ public class Reactions {
         }
 
     }
-    public Reaction getReaction(String type, int amount) {
+    public Reaction getReaction(String type, long amount) {
         Reaction r = getReaction(type);
 
         if (amount < 0) {
@@ -111,14 +137,17 @@ public class Reactions {
         if (r.output_ingredients.get(0).getAmount() <  amount) {
             Reaction m_r = r.clone();
 
+            long factor = (amount / r.output_ingredients.get(0).getAmount());
+            m_r.increaseMultiplier(factor);
             while (m_r.output_ingredients.get(0).getAmount() < amount) {
+                if (LOG) System.out.printf("Need %d, producing %d\n", amount, m_r.output_ingredients.get(0).getAmount());
                 m_r.increaseMultiplier();
             }
             m_r.print();
             return m_r;
         } else {
             r.print();
-            return r;
+            return r.clone();
         }
     }
 
@@ -139,7 +168,7 @@ public class Reactions {
     public Reaction getReaction(String type) {
         for (Reaction r : reactions) {
             if (r.output_ingredients.get(0).myType.compareTo(type) == 0) {
-                return r;
+                return r.clone();
             }
         }
         return null;
@@ -196,84 +225,186 @@ public class Reactions {
 //        }
 
     }
-    public void getORERequired(Reaction r) {
-        Ingredient i= null;
-        int i_pos = 0;
-        boolean nonOre = true;
-        boolean onlyORELeft = true;
-        boolean computeORE = false;
 
-        while (r.input_ingredients.size() > 1) {
+    public void checkLeftovers(Reaction r) {
+
+        for (int i = 0; i < r.input_ingredients.size(); i++) {
+            Ingredient ingredient = r.input_ingredients.get(i);
+            long leftoverAmount = getIngredient(r.leftover_ingredients, ingredient.myType).getAmount();
+            if (leftoverAmount > 0) {
+//                System.out.printf("==> Excess %s found (need %d, found %d)\n", ingredient.myType, ingredient.getAmount(), leftoverAmount);
+            }
+        }
+    }
+
+    public int findFewestInputIngredients(Reaction r) {
+        int minInputIngredients = 999;
+
+        for (int index = 0; index < r.input_ingredients.size(); index++) {
+            Ingredient i = r.input_ingredients.get(index);
+            if (!i.IsOre()) {
+                Reaction i_r = getReaction(i.myType, i.getAmount());
+                minInputIngredients = i_r.input_ingredients.size() < minInputIngredients ? i_r.input_ingredients.size() : minInputIngredients;
+            }
+        }
+        return minInputIngredients;
+
+    }
+
+    public int findMostInputIngredients(Reaction r) {
+        int maxInputIngredients = 0;
+
+        for (int index = 0; index < r.input_ingredients.size(); index++) {
+            Ingredient i = r.input_ingredients.get(index);
+            if (!i.IsOre()) {
+                Reaction i_r = getReaction(i.myType, i.getAmount());
+                maxInputIngredients = i_r.input_ingredients.size() > maxInputIngredients ? i_r.input_ingredients.size() : maxInputIngredients;
+            }
+        }
+        return maxInputIngredients;
+
+    }
+    public long getORERequired(Reaction r) {
+        long ore = 0;
+        Ingredient i= null;
+
+        boolean nonOre = true;
+
+        while (nonOre) {
+            r.print();
+            checkLeftovers(r);
+
             nonOre = false;
-            for (int index = i_pos; index < r.input_ingredients.size(); index++) {
+            for (int index = r.input_ingredients.size()-1; index >= 0 ; index--) {
+//            for (int index = 0; index < r.input_ingredients.size(); index++) {
+
                 i = r.input_ingredients.get(index);
-                if (i.myType.compareTo("ORE") != 0) {
+//                if (!i.IsOre() && (getReaction(i.myType,i.getAmount()).input_ingredients.size() == findFewestInputIngredients(r)))  {
+                if (!i.IsOre() )  {
                     nonOre = true;
-                    i_pos = index;
                     break;
                 }
             }
-            if (i.myType.compareTo("ORE") != 0) {
-                int leftoverAmount = getIngredient(r.leftover_ingredients,i.myType).getAmount();
+
+            if (!i.IsOre()) {
+                long leftoverAmount = getIngredient(r.leftover_ingredients,i.myType).getAmount();
+
+                // if I have enough leftover for what I need
                 if (leftoverAmount >= i.getAmount()) {
                     delete(r.leftover_ingredients, i.myType);
                     add(r.leftover_ingredients, new Ingredient(i.myType, (leftoverAmount - i.getAmount())));
                     delete(r.input_ingredients, i.myType);
-                    System.out.printf("fulfilled with leftover %d %s\n", i.getAmount(), i.myType);
-                    onlyORELeft = false;
-                    ++i_pos;
+//                    System.out.printf("fulfilled with leftover %d %s\n", i.getAmount(), i.myType);
                 } else {
+                    // get the reaction to create what I need (needed amount less the leftover I have)
                     Reaction i_r = getReaction(i.myType, i.getAmount() - leftoverAmount);
                     ArrayList<Ingredient> i_i = i_r.input_ingredients;
 
                     delete(r.leftover_ingredients, i.myType);
                     if (i_r.output_ingredients.get(0).getAmount() > (i.getAmount() - leftoverAmount)) {
-                        System.out.printf("adding remainder %d %s\n", i_r.output_ingredients.get(0).getAmount() - (i.getAmount() - leftoverAmount), i.myType);
+//                        System.out.printf("adding remainder %d %s\n", i_r.output_ingredients.get(0).getAmount() - (i.getAmount() - leftoverAmount), i.myType);
                         add(r.leftover_ingredients, new Ingredient(i.myType, i_r.output_ingredients.get(0).getAmount() - (i.getAmount() - leftoverAmount)));
                     }
                     replace(r, i, i_i);
-                    i_pos += i_i.size() - 1;
-                    onlyORELeft = false;
                 }
-            } else {
-                ++i_pos;
             }
-            r.print();
 
-            if (i_pos >= r.input_ingredients.size()) {
-                i_pos = 0;
-                if (onlyORELeft) {
-                    computeORE = true;
+        }
+        ore = r.input_ingredients.get(0).getAmount();
+        return ore;
+    }
+
+    public boolean isInIngredients(Ingredient i, ArrayList<Ingredient> list) {
+        for (Ingredient which_ingredient: list) {
+            if ((i.myType.compareTo(which_ingredient.myType) == 0) && (which_ingredient.getAmount() > 0)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public void reduceReactionToIngredients(Reaction r, ArrayList<Ingredient> basic_parts) {
+        boolean nonReduced = true;
+        Ingredient i=null;
+
+        while (nonReduced) {
+            r.print();
+            nonReduced = false;
+            for (int index = 0; index < r.input_ingredients.size(); index++) {
+                i = r.input_ingredients.get(index);
+                if (!isInIngredients(i, basic_parts)) {
+                    nonReduced = true;
+                    break;
                 }
-                onlyORELeft = true;
+            }
+
+            if (!i.IsOre()) {
+                long leftoverAmount = getIngredient(r.leftover_ingredients, i.myType).getAmount();
+
+                // if I have enough leftover for what I need
+                if (leftoverAmount >= i.getAmount()) {
+                    delete(r.leftover_ingredients, i.myType);
+                    add(r.leftover_ingredients, new Ingredient(i.myType, (leftoverAmount - i.getAmount())));
+                    delete(r.input_ingredients, i.myType);
+//                    System.out.printf("fulfilled with leftover %d %s\n", i.getAmount(), i.myType);
+                } else {
+                    // get the reaction to create what I need (needed amount less the leftover I have)
+                    Reaction i_r = getReaction(i.myType, i.getAmount() - leftoverAmount);
+                    ArrayList<Ingredient> i_i = i_r.input_ingredients;
+
+                    delete(r.leftover_ingredients, i.myType);
+                    if (i_r.output_ingredients.get(0).getAmount() > (i.getAmount() - leftoverAmount)) {
+//                        System.out.printf("adding remainder %d %s\n", i_r.output_ingredients.get(0).getAmount() - (i.getAmount() - leftoverAmount), i.myType);
+                        add(r.leftover_ingredients, new Ingredient(i.myType, i_r.output_ingredients.get(0).getAmount() - (i.getAmount() - leftoverAmount)));
+                    }
+                    replace(r, i, i_i);
+                    nonReduced = true;
+                }
             }
         }
 
     }
 
-    public void computeOREforFUEL() {
-        int retval = 0;
-        long ore = 1000000000000L;
-        long fuel = 0;
-        ArrayList<Ingredient> leftovers = new ArrayList<>();
+    public long computeOREforFUEL() {
+        long retval = 0;
 
-//        while (ore >= 0) {
-//            reset();
-            Reaction make_fuel = getFuelReaction().clone();
-//            make_fuel.leftover_ingredients = leftovers;
-//            make_fuel.print();
-            getORERequired(make_fuel);
+        Reaction make_fuel = getFuelReaction();
 
-            ore -= make_fuel.input_ingredients.get(0).myAmount;
-            System.out.printf("Used %d ore to make Fuel: %d\n", make_fuel.input_ingredients.get(0).myAmount, fuel);
-            if (ore >= 0) {
-                ++fuel;
-//                if ((fuel % 10000) == 0) {System.out.print("."); }
-                leftovers = make_fuel.leftover_ingredients;
-//                make_fuel.print();
+        retval = getORERequired(make_fuel);
+
+        return retval;
+    }
+
+    public void solver() {
+        long ore_required;
+        System.out.printf("Solver\n");
+
+        Reaction make_fuel = getFuelReaction();
+
+        ore_required = getORERequired(make_fuel);
+
+        long available = 1000000000000l;
+        long low_cycles = available/ore_required;
+        long high_cycles = low_cycles * 4;
+
+        long target = (low_cycles+high_cycles)/2;
+
+        while ((target - low_cycles) > 0) {
+            make_fuel = getReaction("FUEL", target);
+            ore_required = getORERequired(make_fuel);
+
+            System.out.printf("===> Requires %d ORE to make %d fuel (%d-%d)\n", ore_required, target, low_cycles, high_cycles);
+
+            if (ore_required > available) {
+                high_cycles = target;
+            } else
+            {
+                low_cycles = target;
             }
-//        }
-        System.out.printf("Fuel: %d\n", fuel);
+            target = (high_cycles + low_cycles) / 2;
+        }
+        System.out.printf("===> Can make %d FUEL\n", target);
 
     }
 }
