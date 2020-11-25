@@ -150,9 +150,14 @@ public class Main {
 
     }
 
+    public void dec15() {
+        OxygenRepairRobot robot = new OxygenRepairRobot(Constants.dec15_puzzleinput);
+        robot.findOxygenSystem();
+        System.out.print(robot.robot_steps);
+    }
     public static void main(String[] args) {
         Main m = new Main();
-        m.dec14();
+        m.dec15();
 
     }
 }

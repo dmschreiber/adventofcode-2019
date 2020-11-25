@@ -58,4 +58,25 @@ public class Surface {
 
         }
     }
+
+    public void displaySpace(int myX, int myY) {
+        System.out.printf("%d to %d, %d to %d\n", lowerY, upperY, lowerX, upperX);
+        for (int y = upperY+1; y > lowerY-2;y--) {
+            for (int x = lowerX-1; x < upperX+2;x++) {
+                if ((x == myX) && (y == myY)) {
+                    System.out.print("D");
+                } else if (getColor(x,y) == 100) {
+                    System.out.print("#");
+                } else if (getColor(x,y) == 101){
+                    System.out.print(".");
+                } else if (getColor(x,y) == 102) {
+                    System.out.print("@");
+                } else {
+                    System.out.print(" ");
+                }
+            }
+            System.out.println();
+
+        }
+    }
 }
