@@ -153,7 +153,16 @@ public class Main {
     public void dec15() {
         OxygenRepairRobot robot = new OxygenRepairRobot(Constants.dec15_puzzleinput);
         robot.findOxygenSystem();
-        System.out.print(robot.robot_steps);
+
+        Oxygenator o = new Oxygenator(robot.mySurface);
+        while (o.incomplete()) {
+            System.out.printf("\n%d minutes elapsed\n", o.minutes);
+            robot.mySurface.displaySpace(0,0);
+            o.oxygenate();
+        }
+
+        System.out.printf("\nOxygenated in %d minutes\n", o.minutes);
+
     }
     public static void main(String[] args) {
         Main m = new Main();

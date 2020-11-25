@@ -1,15 +1,30 @@
 package com.schreibersolutions;
 import javafx.util.Pair;
+
+import java.lang.reflect.Array;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 public class Surface {
     int lowerX = 0, lowerY = 0, upperX = 0, upperY = 0;
     private int myDefault;
     int paintedPanelCount = 0;
     HashMap<Pair<Integer,Integer>,Integer> panels = new HashMap<Pair<Integer,Integer>,Integer>();
+    ArrayList<ArrayList<Integer>> solutions = new ArrayList<>();
 
     Surface (int defaultValue) {
         myDefault = defaultValue;
+    }
+
+    public ArrayList<Pair<Integer,Integer>> getLocations(int color) {
+        ArrayList<Pair<Integer,Integer>> retval = new ArrayList<>();
+
+        for (Pair p: panels.keySet()) {
+            if (panels.get(p) == color) {
+                retval.add(p);
+            }
+        }
+        return retval;
     }
 
     public int getColor(int x, int y) {
@@ -62,15 +77,18 @@ public class Surface {
     public void displaySpace(int myX, int myY) {
         System.out.printf("%d to %d, %d to %d\n", lowerY, upperY, lowerX, upperX);
         for (int y = upperY+1; y > lowerY-2;y--) {
+            System.out.printf("%3d:",y);
             for (int x = lowerX-1; x < upperX+2;x++) {
                 if ((x == myX) && (y == myY)) {
                     System.out.print("D");
-                } else if (getColor(x,y) == 100) {
+                } else if (getColor(x,y) == OxygenRepairRobot.SPACE_WALL) {
                     System.out.print("#");
-                } else if (getColor(x,y) == 101){
+                } else if (getColor(x,y) == OxygenRepairRobot.SPACE_BLANK){
                     System.out.print(".");
-                } else if (getColor(x,y) == 102) {
+                } else if (getColor(x,y) == OxygenRepairRobot.SPACE_OXYGENATOR) {
                     System.out.print("@");
+                } else if (getColor(x,y) == OxygenRepairRobot.SPACE_OXYGEN) {
+                    System.out.print("O");
                 } else {
                     System.out.print(" ");
                 }

@@ -1,9 +1,10 @@
 package com.schreibersolutions;
 
 import java.util.ArrayList;
-import java.util.Stack;
 
 public class OxygenRepairRobot {
+    boolean LOG = false;
+
     IntcodeComputer computer = new IntcodeComputer();
     Surface mySurface;
     ArrayList<Integer> robot_steps = new ArrayList<>();
@@ -14,9 +15,10 @@ public class OxygenRepairRobot {
     int DIRECTION_WEST = 3;
     int DIRECTION_EAST = 4;
 
-    int SPACE_WALL = 100;
-    int SPACE_BLANK = 101;
-    int SPACE_OXYGEN = 102;
+    static int SPACE_WALL = 100;
+    static int SPACE_BLANK = 101;
+    static int SPACE_OXYGENATOR = 102;
+    static int SPACE_OXYGEN = 103;
 
     int RESULT_WALL = 0;
     int RESULT_MOVED = 1;
@@ -84,41 +86,67 @@ public class OxygenRepairRobot {
         }
     }
 
+    private long move(int direction) {
+        computer.inputs.push((long) direction);
+        computer.resume();
+
+        long result = computer.outputs.pop();
+        if (result != RESULT_WALL) {
+            myX = getNewX(direction);
+            myY = getNewY(direction);
+        }
+        return result;
+    }
+
+    private int oppositeDirection(int direction) {
+        int retval = 0;
+
+        if (direction == DIRECTION_SOUTH) retval = DIRECTION_NORTH;
+        if (direction == DIRECTION_NORTH) retval = DIRECTION_SOUTH;
+        if (direction == DIRECTION_EAST) retval = DIRECTION_WEST;
+        if (direction == DIRECTION_WEST) retval = DIRECTION_EAST;
+
+        return retval;
+    }
+
     public void findOxygenSystem() {
         computer.run();
         int instruction = 0;
 
         while ((computer.isRunning) && (instruction < robot_control.size())) {
             int direction = robot_control.get(instruction++);
+            if (LOG) System.out.printf("Move %d\n", direction);
             if (mySurface.getColor(getNewX(direction),getNewY(direction)) == SPACE_BLANK) {
-                System.out.printf("I've been there before, so I'll skip it\n");
+                if (LOG) System.out.printf("I've been there before, so I'll skip it\n");
             } else {
-                // TODO: move(direction);
-                computer.inputs.push((long) direction);
-                computer.resume();
-
-                long result = computer.outputs.pop();
-                System.out.printf(!exploreSpaces ? "Replay move %d, result %d\n": "Explore move %d, result %d\n", direction, result);
+                long result = move(direction);
+                if (LOG) System.out.printf("Move %d, result %d\n", direction, result);
 
                 if (result == RESULT_WALL) {
                     // wall
                     mySurface.setColor(getNewX(direction), getNewY(direction), SPACE_WALL);
                 } else {
                     // moved
-                    robot_steps.add(direction);
-                    myX = getNewX(direction);
-                    myY = getNewY(direction);
                     if (result == RESULT_MOVED) {
                         mySurface.setColor(myX, myY, SPACE_BLANK);
-                        if (exploreSpaces) {
-                            OxygenRepairRobot r = new OxygenRepairRobot(computer.program, (ArrayList<Integer>) robot_steps.clone(), mySurface, myX, myY);
-                        }
-                        // TODO: move(oppositeDirection(direction));
                     } else if (result == RESULT_MOVED_OXYGEN_SYSTEM) {
                         // success!
-                        mySurface.setColor(myX, myY, SPACE_OXYGEN);
+                        mySurface.setColor(myX, myY, SPACE_OXYGENATOR);
+
+                        ArrayList<Integer> new_steps = (ArrayList<Integer>) robot_steps.clone();
+                        new_steps.add(direction);
+                        mySurface.solutions.add(new_steps);
+
+                        System.out.printf("Depth: %d\n", robot_steps.size()+1);
                         System.out.print(robot_steps);
                     }
+
+                    if (exploreSpaces) {
+                        ArrayList<Integer> new_steps = (ArrayList<Integer>) robot_steps.clone();
+                        new_steps.add(direction);
+                        OxygenRepairRobot r = new OxygenRepairRobot(computer.program,  new_steps, mySurface, myX, myY);
+                    }
+                    move(oppositeDirection(direction));
                 }
 
 
@@ -130,15 +158,19 @@ public class OxygenRepairRobot {
 
                 }
                 if ((result == RESULT_MOVED_OXYGEN_SYSTEM)) {
-                    mySurface.displaySurface();
-                    break;
+                    System.out.printf("found\n");
+//                    break;
                 }
             } // else not someplace we've been before
         }
-        System.out.printf("Explored all my options!\n");
-        System.out.print(robot_steps.size());
-        mySurface.displaySpace(myX, myY);
-
+        if ((mySurface.solutions.size() > 0) && (robot_steps.size() == 0)) {
+            mySurface.displaySpace(0, 0);
+            System.out.printf("solution %d\n", mySurface.solutions.size());
+            for (ArrayList<Integer> sol : mySurface.solutions) {
+                System.out.printf("Steps %d\n", sol.size());
+                System.out.print(sol);
+            }
+        }
     }
 
 }
