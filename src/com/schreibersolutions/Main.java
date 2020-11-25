@@ -156,8 +156,6 @@ public class Main {
 
         Oxygenator o = new Oxygenator(robot.mySurface);
         while (o.incomplete()) {
-            System.out.printf("\n%d minutes elapsed\n", o.minutes);
-            robot.mySurface.displaySpace(0,0);
             o.oxygenate();
         }
 
