@@ -3,6 +3,8 @@ package com.schreibersolutions;
 import com.sun.tools.internal.jxc.ap.Const;
 import sun.applet.AppletListener;
 
+import java.time.LocalDateTime;
+
 public class Main {
     public static final String ANSI_RESET = "\u001B[0m";
     public static final String ANSI_BLACK = "\u001B[30m";
@@ -166,9 +168,10 @@ public class Main {
     public void dec16() {
         String input = "12345678";
         FFT fft = new FFT(new int[]{0,1,0,-1});
+        boolean testPassed;
 
         String output = fft.processPhase(input);
-        boolean testPassed = (output.compareTo("48226158") == 0);
+        testPassed = (output.compareTo("48226158") == 0);
         System.out.printf((testPassed ? ANSI_RESET : ANSI_RED) + "Test : %s\n", testPassed);
 
         output = fft.processPhase(output);
@@ -197,9 +200,34 @@ public class Main {
         testPassed = (output.substring(0,8).compareTo("52432133") == 0);
         System.out.printf((testPassed ? ANSI_RESET : ANSI_RED) + "Test : %s\n", testPassed);
 
+        input = "03036732577212944063491565474664";
         input = "59773590431003134109950482159532121838468306525505797662142691007448458436452137403459145576019785048254045936039878799638020917071079423147956648674703093863380284510436919245876322537671069460175238260758289779677758607156502756182541996384745654215348868695112673842866530637231316836104267038919188053623233285108493296024499405360652846822183647135517387211423427763892624558122564570237850906637522848547869679849388371816829143878671984148501319022974535527907573180852415741458991594556636064737179148159474282696777168978591036582175134257547127308402793359981996717609700381320355038224906967574434985293948149977643171410237960413164669930";
-        output = fft.processPhase(input, 100);
-        System.out.printf("result: %s\n", output.substring(0,8));
+
+        int offset = Integer.valueOf(input.substring(0,7));
+        char[] input_char = input.toCharArray();
+
+        System.out.printf("Start %s\n", LocalDateTime.now());
+        input_char = fft.multiplyByTenThousand(input_char);
+        System.out.printf("End multiply %s\n", LocalDateTime.now());
+        char[] output_char = fft.processPhase(input_char, 100);
+//        testPassed = (output_char[offset] == '8');
+//        testPassed = (output_char[offset+1] == '4') && testPassed;
+//        testPassed = (output_char[offset+2] == '4') && testPassed;
+//        testPassed = (output_char[offset+3] == '6') && testPassed;
+//        testPassed = (output_char[offset+4] == '2') && testPassed;
+//        testPassed = (output_char[offset+5] == '0') && testPassed;
+//        testPassed = (output_char[offset+6] == '2') && testPassed;
+//        testPassed = (output_char[offset+7] == '6') && testPassed;
+//        System.out.printf((testPassed ? ANSI_RESET : ANSI_RED) + "Test : %s\n", testPassed);
+        for (int i = 0; i < 8; i++) {
+            System.out.print(String.valueOf(output_char[offset+i]));
+        }
+//        System.out.println(LocalDateTime.now());
+//        input = "59773590431003134109950482159532121838468306525505797662142691007448458436452137403459145576019785048254045936039878799638020917071079423147956648674703093863380284510436919245876322537671069460175238260758289779677758607156502756182541996384745654215348868695112673842866530637231316836104267038919188053623233285108493296024499405360652846822183647135517387211423427763892624558122564570237850906637522848547869679849388371816829143878671984148501319022974535527907573180852415741458991594556636064737179148159474282696777168978591036582175134257547127308402793359981996717609700381320355038224906967574434985293948149977643171410237960413164669930";
+//        output = fft.processPhase(input, 100);
+//        System.out.printf("result: %s\n", output.substring(0,8));
+//        System.out.println(LocalDateTime.now());
+
 
     }
     public static void main(String[] args) {
