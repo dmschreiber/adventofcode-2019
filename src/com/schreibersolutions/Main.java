@@ -229,9 +229,18 @@ public class Main {
         }
 
     }
+
+    public void dec17() {
+
+        ScaffoldCamera c = new ScaffoldCamera();
+        c.init();
+        long retval = c.sumAlignmentParameters();
+        System.out.printf("Sum of alignment parameters is %d\n",retval);
+    }
+
     public static void main(String[] args) {
         Main m = new Main();
-        m.dec16();
+        m.dec17();
 
     }
 }
