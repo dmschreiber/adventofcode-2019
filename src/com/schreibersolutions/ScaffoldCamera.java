@@ -20,6 +20,7 @@ public class ScaffoldCamera {
 
         while (computer.outputs.size() > 0)
         {
+
             for (int i = 0; i < computer.outputs.size(); i++) {
                 long result = computer.outputs.get(i);
                 char c = (char) result;
@@ -58,4 +59,157 @@ public class ScaffoldCamera {
 
         return retval;
     }
+
+    int NORTH = 1;
+    int EAST = 2;
+    int SOUTH = 3;
+    int WEST = 4;
+
+    private String getTurn(char dir, char desired) {
+        if (dir == desired) return "";
+
+        if((dir == 'N') && (desired == 'E')) {
+            return "R,";
+        }
+        if((dir == 'E') && (desired == 'S')) {
+            return "R,";
+        }
+        if((dir == 'S') && (desired == 'W')) {
+            return "R,";
+        }
+        if((dir == 'W') && (desired == 'N')) {
+            return "R,";
+        }
+        if((dir == 'N') && (desired == 'W')) {
+            return "L,";
+        }
+        if((dir == 'W') && (desired == 'S')) {
+            return "L,";
+        }
+        if((dir == 'S') && (desired == 'E')) {
+            return "L,";
+        }
+        if((dir == 'E') && (desired == 'N')) {
+            return "L,";
+        }
+        return "X";
+
+    }
+
+    private int getNewX(int direction, int x) {
+        if (direction == 'W') return x-1;
+        if (direction == 'E') return x+1;
+        return x;
+    }
+
+    private int getNewY(int direction, int y) {
+        if (direction == 'N') return y+1;
+        if (direction == 'S') return y-1;
+        return y;
+    }
+
+    private char findNewDirection(int direction, int x, int y) {
+        if (direction != 'E' && mySurface.getColor(x-1,y) == '#') return 'W';
+        if (direction != 'W' && mySurface.getColor(x+1,y) == '#') return 'E';
+        if (direction != 'N' && mySurface.getColor(x,y-1) == '#') return 'S';
+        if (direction != 'S' && mySurface.getColor(x,y+1) == '#') return 'N';
+        return 'X';
+    }
+
+    public String findTraverseDirections() {
+        String retval = "";
+        ArrayList<Pair<Integer,Integer>> pairs = mySurface.getLocations('^');
+
+        int x = pairs.get(0).getKey();
+        int y = pairs.get(0).getValue();
+        char direction = 'N';
+        char desired_direction = 'E';
+        int step_count = 0;
+
+        while (desired_direction != 'X') {
+            retval = retval + getTurn(direction, desired_direction);
+            direction = desired_direction;
+
+            if (mySurface.getColor(getNewX(direction, x), getNewY(direction, y)) == '#') {
+                x = getNewX(direction, x);
+                y = getNewY(direction, y);
+                ++step_count;
+            } else // turn
+            {
+                retval = retval + String.valueOf(step_count) + ",";
+                step_count = 0;
+                desired_direction = findNewDirection(direction, x, y);
+            }
+        }
+
+        return retval;
+    }
+
+    public long traverse(char[] main, char[] f_a, char[] f_b, char[] f_c) {
+        long retval = 0;
+
+        computer = new IntcodeComputer();
+        program[0] = 2;
+        computer.program = program;
+
+        computer.isInteractive = false;
+
+        computer.inputs.push((long) 10);
+        computer.inputs.push((long) 'n');
+
+        computer.inputs.push((long) 10);
+        for (int i = f_c.length-1; i >= 0; i--) {
+            computer.inputs.push((long) f_c[i]);
+        }
+
+        computer.inputs.push((long) 10);
+        for (int i = f_b.length-1; i >=0; i--) {
+            computer.inputs.push((long) f_b[i]);
+        }
+
+        computer.inputs.push((long) 10);
+        for (int i = f_a.length-1; i >=0; i--) {
+            computer.inputs.push((long) f_a[i]);
+        }
+
+        computer.inputs.push((long) 10);
+        for (int i = main.length-1; i >=0; i--) {
+            computer.inputs.push((long) main[i]);
+        }
+        int x = 0;
+        int y = 0;
+
+        computer.run();
+        while (computer.outputs.size() > 0)
+        {
+            if (computer.outputs.size() > 3) {
+                String str = "";
+                for (int i = 0; i < computer.outputs.size(); i++) {
+                    long result = computer.outputs.get(i);
+                    char c = (char) result;
+                    str = str + String.valueOf(result);
+                }
+                System.out.printf("%s\n",str);
+            }
+
+            for (int i = 0; i < computer.outputs.size(); i++) {
+                long result = computer.outputs.get(i);
+                retval = result;
+                char c = (char) result;
+                if (c == 10) {
+                    --y;
+                    x = 0;
+                } else {
+                    mySurface.setColor(x, y, c);
+                    ++x;
+                }
+                mySurface.displayCamera();
+            }
+            computer.outputs.clear();
+            computer.resume();
+        }
+
+        return retval;
+    }
+
 }
