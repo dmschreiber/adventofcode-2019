@@ -31,11 +31,11 @@ public class ScaffoldCamera {
                     mySurface.setColor(x, y, c);
                     ++x;
                 }
-                mySurface.displayCamera();
             }
             computer.outputs.clear();
             computer.resume();
         }
+        mySurface.displayCamera();
 
     }
 
@@ -182,16 +182,6 @@ public class ScaffoldCamera {
         computer.run();
         while (computer.outputs.size() > 0)
         {
-            if (computer.outputs.size() > 3) {
-                String str = "";
-                for (int i = 0; i < computer.outputs.size(); i++) {
-                    long result = computer.outputs.get(i);
-                    char c = (char) result;
-                    str = str + String.valueOf(result);
-                }
-                System.out.printf("%s\n",str);
-            }
-
             for (int i = 0; i < computer.outputs.size(); i++) {
                 long result = computer.outputs.get(i);
                 retval = result;
@@ -199,15 +189,18 @@ public class ScaffoldCamera {
                 if (c == 10) {
                     --y;
                     x = 0;
-                } else {
+                } else if ((c == '.') || (c == '#') || (c == '>') || (c == '^') || (c == '<') ) {
                     mySurface.setColor(x, y, c);
                     ++x;
+                } else
+                {
+                    System.out.print(c);
                 }
-                mySurface.displayCamera();
             }
             computer.outputs.clear();
             computer.resume();
         }
+        mySurface.displayCamera();
 
         return retval;
     }

@@ -233,9 +233,9 @@ public class Main {
     public void dec17() {
 
         ScaffoldCamera c = new ScaffoldCamera();
-//        c.init();
-//        long retval = c.sumAlignmentParameters();
-//        System.out.println(c.findTraverseDirections());
+        c.init();
+        long retval = c.sumAlignmentParameters();
+        System.out.println(c.findTraverseDirections());
         char[] main = "A,A,B,C,B,C,B,C,C,A".toCharArray();
         char[] f_a = "R,8,L,4,R,4,R,10,R,8".toCharArray();
         char[] f_b = "L,12,L,12,R,8,R,8".toCharArray();
