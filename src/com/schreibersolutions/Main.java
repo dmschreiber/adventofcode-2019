@@ -243,9 +243,25 @@ public class Main {
         System.out.println(c.traverse(main,f_a,f_b,f_c));
     }
 
+    public void dec18() {
+        CameraSurface s = new CameraSurface(0);
+
+        try {
+            s.readFromFile("/Users/dschreiber/Projects/advent-of-code/dec18.txt");
+        } catch (Exception e) {
+            System.err.printf("Error: %s\n", e.getMessage());
+        }
+
+        s.displayCamera();
+
+        // vaultState.init(s); // load keys, doors and location & remove them from the surface map
+        // vaultSolver.solve(s,vaultState); // for each key, find the path.setps and then explore from there.
+        
+
+    }
     public static void main(String[] args) {
         Main m = new Main();
-        m.dec17();
+        m.dec18();
 
     }
 }

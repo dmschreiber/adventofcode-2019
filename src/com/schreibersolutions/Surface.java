@@ -1,6 +1,9 @@
 package com.schreibersolutions;
 import javafx.util.Pair;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -14,6 +17,30 @@ public class Surface {
 
     Surface (int defaultValue) {
         myDefault = defaultValue;
+    }
+
+    public void readFromFile(String filename) throws IOException {
+            BufferedReader reader = new BufferedReader(new FileReader(filename));
+            String         line = null;
+            StringBuilder  stringBuilder = new StringBuilder();
+            String         ls = System.getProperty("line.separator");
+            int x = 0;
+            int y = 0;
+
+            try {
+                while((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                    for (int i = 0; i< line.length(); i++) {
+                        setColor(x,y,line.charAt(i));
+                        ++x;
+                    }
+                    x=0;
+                    --y;
+                }
+
+            } finally {
+                reader.close();
+            }
     }
 
     public ArrayList<Pair<Integer,Integer>> getLocations(int color) {
