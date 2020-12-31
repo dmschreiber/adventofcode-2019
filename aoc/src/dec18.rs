@@ -5,8 +5,8 @@ mod tests {
     fn dec18_part1() {
       let lines: Vec<String> = include_str!("../inputs/dec18.txt").lines().map(|s| (&*s).to_string() ).collect();
       let start = Instant::now();
-      assert!(6316==super::solve_part1(lines));
-      // super::solve_part2(lines);
+      // assert!(6316==super::solve_part1(lines));
+      super::solve_part2(lines);
       println!("Complete in {:?}", start.elapsed());
 //        Complete in 800.48883394s
 //        Complete in 787.981406902s
@@ -145,7 +145,7 @@ fn print_map(map : &HashMap<(usize,usize),Block>, current : (usize,usize)) {
 }
 
 #[allow(dead_code)]
-fn print_map_2(map : &HashMap<(usize,usize),Block>, currents : Vec<(usize,usize)>) {
+fn print_map_2(map : &HashMap<(usize,usize),Block>, currents : &Vec<(usize,usize)>) {
   let max_row = map.keys().map(|(a,_b)| *a).max().unwrap();
   let max_col = map.keys().map(|(_a,b)| *b).max().unwrap();
   let min_row = map.keys().map(|(a,_b)| *a).min().unwrap();
@@ -276,6 +276,90 @@ pub fn solve_part1(lines : Vec<String>) -> usize {
   retval.iter().map(|(_a,b)| b).sum::<usize>()
 }
 
+fn create_complex_key_history(history : &Vec<Vec<Block>>) -> Vec<char> {
+  let mut complete_history = vec![];
+  for h in history {
+    let mut h_flat = h.iter().map(|b| b.value).collect::<Vec<char>>();
+    complete_history.append(&mut h_flat);
+  }
+  return complete_history;
+}
+
+#[allow(dead_code)]
+fn move_to_key_2(map : &HashMap<(usize,usize),Block>, current_positions : &Vec<(usize, usize)>, history : &Vec<Vec<Block>>, cache : &mut HashMap<String,Vec<(char,usize)>>) -> Vec<Vec<(char,usize)>> {
+  let mut candidate_list = vec![];
+  let key_history = create_complex_key_history(history);
+
+  if map.values().filter(|b| b.is_key_str(&key_history)).count() == 0 {
+    let retval = history.iter().map(|v| v.iter().map(|b| (b.value,b.distance) ).collect::<Vec<(char,usize)>>()).collect::<Vec<Vec<(char,usize)>>>(); // fold(vec![], |acc, v| {acc.append(&mut v); acc});
+    return retval;
+  }
+
+  for (which_robot,current_position) in current_positions.iter().enumerate() {
+    let blocks = map.values()
+                  .filter(|b| b.is_key_str(&key_history))
+                  .map(|b| (b,path(&map, b.position, *current_position, &vec![], &key_history)))
+                  .filter(|(_b,d)| *d != None)
+                  .map(|(b,d)| Block{ position : b.position, distance : d.unwrap(), value : b.value})
+                  .collect::<Vec<Block>>();
+
+
+    print!("{} {:?} ", which_robot, current_position);
+    if history.len() > 0 {
+      for _i in 0..history[which_robot].len() { print!(">"); }
+      print!("History {:?}", history[which_robot].iter().map(|b| b.value).collect::<Vec<char>>());
+    }
+    println!("Exploring {:?} options ({} keys left)", 
+      blocks.iter().map(|b| b.value).collect::<Vec<char>>(),
+      map.values().filter(|b| b.is_key_str(&key_history)).count());
+
+    for block in blocks {
+      let mut new_history : Vec<Vec<Block>> = vec![];
+      if history.len() == 0 {
+        for _i in current_positions {
+          new_history.push(vec![]);
+        }
+      } else {
+        new_history = history.clone();
+      }
+    
+      let mut new_positions = current_positions.clone();
+      new_positions[which_robot] = block.position;
+      new_history[which_robot].push(block.clone());
+      let candidate = move_to_key_2(&map, &new_positions, &new_history, cache);
+      candidate_list.push(candidate);
+    }
+  }
+  candidate_list.dedup();
+
+  // if candidate_list.len() > 1 {
+  //   let labels = vec!["top left", "bottom right", "bottom left", "top right"];
+  //   for c in &candidate_list {
+  //     let mut candidate_distance = 0;
+  //     for (i,robot) in c.iter().enumerate() {
+  //       println!("{} {:?}", labels[i], robot);
+  //       candidate_distance = candidate_distance + robot.iter().map(|(_c,d)| d).sum::<usize>();
+  //     }
+  //     println!("total distance {}", candidate_distance);
+  //   }
+  //   panic!("stop");
+  // }
+
+  let mut minimum = 9999;
+  let mut smallest = vec![];
+
+  while let Some(c) = candidate_list.pop() {
+    let mut candidate_distance = 0;
+    for c_history in &c {
+      candidate_distance = candidate_distance + c_history.iter().map(|(_c,d)| d).sum::<usize>();
+    }
+    if candidate_distance < minimum {
+      minimum = candidate_distance;
+      smallest = c.clone();
+    }
+  }
+  return smallest;
+}
 #[allow(dead_code)]
 pub fn solve_part2(lines : Vec<String>) {
 
@@ -304,10 +388,17 @@ pub fn solve_part2(lines : Vec<String>) {
 
   }
 
-  print_map_2(&map, current_positions);
+  print_map_2(&map, &current_positions);
 
-  // let retval = move_to_key_2(map, current_positions, vec![], &mut HashMap::new());
-  // println!("{:?}", retval);
-  // println!("{}", retval.iter().map(|(_a,b)| b).sum::<usize>());
+  let retval = move_to_key_2(&map, &current_positions, &vec![], &mut HashMap::new());
+
+  let labels = vec!["top left", "bottom right", "bottom left", "top right"];
+  let mut distance = 0;
+  for (robot,h) in retval.iter().enumerate() {
+    distance = distance + h.iter().map(|(_c,d)| d).sum::<usize>();
+    println!("Robot {}: {:?}", labels[robot], h);
+  }
+
+  println!("{}", distance);
 
 }
