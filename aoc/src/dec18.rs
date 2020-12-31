@@ -11,6 +11,8 @@ mod tests {
 //        Complete in 800.48883394s
 //        Complete in 787.981406902s
 //        Complete in 64.339802425s
+//        Complete in 46.228593998s
+
     }
 }
 
@@ -43,7 +45,8 @@ impl Block {
   #[allow(dead_code)]
   fn is_key_str(&self, history : &Vec<char>) -> bool {
     if  self.value >= 'a' && self.value <= 'z' {
-      let is_key = !history.contains(&self.value);
+
+      let is_key = history.iter().filter(|b| **b == self.value).count() == 0;
       return is_key;
     }
     return  false;
@@ -53,7 +56,9 @@ impl Block {
     if self.value == '#' { return true; }
     if self.value == '.' { return false; }
     if self.value >= 'A' && self.value <= 'Z' {
-      let is_wall = !history.contains(&self.value);
+      let associated_key = (self.value as u8 - b'A' + b'a') as char;
+      let is_wall = history.iter().filter(|b| **b == associated_key).count() == 0;
+
       return is_wall; // if my wall has a key in history, not a wall
     }
     return false;
@@ -85,23 +90,20 @@ impl Block {
   }
 }
 #[allow(dead_code)]
-fn path(map : &HashMap<(usize,usize),Block>, point_a : (usize,usize), point_b : (usize,usize), history : &Vec<(usize,usize)>, key_history : &Vec<Block>) -> Option<usize> {
+fn path(map : &HashMap<(usize,usize),Block>, point_a : (usize,usize), point_b : (usize,usize), history : &Vec<(usize,usize)>, key_history : &Vec<char>) -> Option<usize> {
   let mut min_distance = 9999;
-  let key_str = key_history.iter().map(|b| b.value).collect::<Vec<char>>();
-  let wall_str = key_history.iter().map(|b| (b'A' + b.value as u8 - b'a') as char).collect::<Vec<char>>();
-
-  // println!("key_str {}, wall_str {}", key_str, wall_str);
+  let key_str = key_history;
+  
   if point_a == point_b { return Some(history.len()); }
 
   let neighbors = get_neighbors(&point_a);
 
-  // if let Some(b) = map.get(&point_a) {
     for n in neighbors {
       if n == point_b {
         if history.len()+1 < min_distance {min_distance = history.len()+1; break; }
       } 
       if let Some(n_o) = map.get(&n) {
-        if !n_o.is_wall_str(&wall_str) && !n_o.is_key_str(&key_str) {
+        if !n_o.is_wall_str(&key_str) && !n_o.is_key_str(&key_str) {
           if !history.contains(&n) {
             let mut new_history = history.clone();
             new_history.push(n);
@@ -113,8 +115,8 @@ fn path(map : &HashMap<(usize,usize),Block>, point_a : (usize,usize), point_b : 
       }
     }
     if min_distance < 9999 { return Some(min_distance) };
-  // }
-  return None;
+
+    return None;
 }
 
 #[allow(dead_code)]
@@ -177,9 +179,10 @@ fn move_to_key(map : &HashMap<(usize,usize),Block>, current_position : (usize, u
 
   let mut candidate_list : Vec<Vec<(char,usize)>> = vec![];
   let start = Instant::now();
+  let key_history = history.iter().map(|b| b.value).collect::<Vec<char>>();
   let blocks = map.values()
-                .filter(|b| b.is_key(&history))
-                .map(|b| (b,path(&map, b.position, current_position, &vec![], &history)))
+                .filter(|b| b.is_key_str(&key_history))
+                .map(|b| (b,path(&map, b.position, current_position, &vec![], &key_history)))
                 .filter(|(_b,d)| *d != None)
                 .map(|(b,d)| Block{ position : b.position, distance : d.unwrap(), value : b.value})
                 .collect::<Vec<Block>>();
@@ -193,50 +196,43 @@ fn move_to_key(map : &HashMap<(usize,usize),Block>, current_position : (usize, u
   }
 
   for (_i,block) in blocks.iter().enumerate() {
-    let new_position = block.position;
-    let block_distance = block.distance;
-
     let mut new_history = history.clone();
-    let mut block_copy = block.clone().to_owned();
-    block_copy.distance = block_distance;
+    let block_copy = block.clone().to_owned();
     new_history.push(block_copy);
 
     let v_candidate : Vec<(char,usize)>;
     // let start = Instant::now();
-    let key = format!("{:?} {:?}", new_position, map.values().filter(|b| b.is_key(&history)).map(|b| b.value).collect::<Vec<char>>());
+    let key = format!("{}-{}-{}", block.position.0, block.position.1, map.values().filter(|b| b.is_key(&history)).map(|b| b.value).collect::<String>());
 
     if let Some(temp) = cache.get(&key) {
       let mut front = history.iter().map(|b| (b.value,b.distance) ).collect::<Vec<(char,usize)>>();
-      let mut middle = vec![(block.value, block_distance)];
+      let mut middle = vec![(block.value, block_copy.distance)];
       let mut back = temp.clone();
       front.append(&mut middle);
       front.append(&mut back);
       v_candidate = front;
-      // println!("found in cache {}, created {:?}", &key, v_candidate);
+
     } else {
-      v_candidate= move_to_key(&map, new_position, &new_history, cache);
-      // println!("storing in cache {} - {:?}", &key, &v_candidate);
+      v_candidate= move_to_key(&map, block.position, &new_history, cache);
       cache.insert(key,v_candidate.clone()[history.len()+1..].to_vec());
     }
-    // println!("appending {:?} with {:?}", candidate_list, v_candidate);
-    candidate_list.push(v_candidate.clone());
+
+    candidate_list.push(v_candidate);
     candidate_list.dedup();
   }
 
+  // check my list of possible paths
   if candidate_list.len() == 0 { return vec![]; }
 
-  let mut minimum = candidate_list[0].iter().map(|(_c,distance)| distance).sum::<usize>();
-  let mut smallest = candidate_list[0].clone();
-  // println!("I have {} results", candidate_list.len());
-  if candidate_list.len() > 1 {
-    for a in &candidate_list {      
-      let my_size = a.iter().map(|(_c,distance)| distance).sum::<usize>();
-      if  my_size < minimum {
-        minimum = my_size ;
-        smallest = a.clone();
-      }
-      // println!("{:?}: {}", a, a.iter().map(|(c,d)| d).sum::<usize>());
-    }
+  let mut minimum = 9999; // candidate_list[0].iter().map(|(_c,distance)| distance).sum::<usize>();
+  let mut smallest = vec![]; // candidate_list[0].clone();
+
+  while let Some(a) = candidate_list.pop() {
+    let my_size = a.iter().map(|(_c,distance)| distance).sum::<usize>();
+    if  my_size < minimum {
+      minimum = my_size ;
+      smallest = a.clone();
+    }  
   }
   return smallest
 
