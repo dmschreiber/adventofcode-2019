@@ -278,7 +278,10 @@ fn create_complex_key_history(history : &Vec<Vec<Block>>) -> Vec<char> {
 }
 
 #[allow(dead_code)]
-fn move_to_key_2(map : &HashMap<(usize,usize),Block>, current_positions : &Vec<(usize, usize)>, history : &Vec<Vec<Block>>, cache : &mut HashMap<String,Vec<Vec<(char,usize)>>>) -> Vec<Vec<(char,usize)>> {
+fn move_to_key_2(map : &HashMap<(usize,usize),Block>, 
+                 current_positions : &Vec<(usize, usize)>, 
+                 history : &Vec<Vec<Block>>, cache : &mut HashMap<String,Vec<Vec<(char,usize)>>>,
+                 center : (usize,usize) ) -> Vec<Vec<(char,usize)>> {
   let mut candidate_list = vec![];
   let key_history = create_complex_key_history(history);
 
@@ -290,6 +293,15 @@ fn move_to_key_2(map : &HashMap<(usize,usize),Block>, current_positions : &Vec<(
   for (which_robot,current_position) in current_positions.iter().enumerate() {
     let blocks = map.values()
                   .filter(|b| b.is_key_str(&key_history))
+                  .filter(|b| {
+                    match which_robot {
+                      0 => { b.position.0 < center.0 && b.position.1 < center.1  }
+                      1 => { b.position.0 > center.0 && b.position.1 > center.1  }
+                      2 => { b.position.0 > center.0 && b.position.1 < center.1  }
+                      3 => { b.position.0 < center.0 && b.position.1 > center.1  }
+                      _ => false
+                    }
+                  })
                   .map(|b| (b,path(&map, b.position, *current_position, &vec![], &key_history)))
                   .filter(|(_b,d)| *d != None)
                   .map(|(b,d)| Block{ position : b.position, distance : d.unwrap(), value : b.value})
@@ -335,7 +347,7 @@ fn move_to_key_2(map : &HashMap<(usize,usize),Block>, current_positions : &Vec<(
         candidate = cached_candidate;
   
       } else {
-        candidate = move_to_key_2(&map, &new_positions, &new_history, cache);
+        candidate = move_to_key_2(&map, &new_positions, &new_history, cache, center);
         // println!("Storing key {} {:?}", key, candidate);
         let mut cached_candidate = vec![vec![],vec![],vec![],vec![]];
 
@@ -374,9 +386,12 @@ pub fn solve_part2(lines : &Vec<String>) -> usize {
   let mut current_positions = vec![];
   let mut new_walls = vec![];
 
+  let mut center = (0,0);
   for line in lines {
     for block in line.as_bytes() {
       if *block == b'@' {
+        println!("CENTER - {:?}", (row,col));
+        center = (row,col);
         current_positions = vec![(row-1,col-1), (row+1,col+1), (row+1,col-1), (row-1,col+1)];
         new_walls = vec![(row+1,col),(row-1,col),(row,col-1),(row,col+1)];
         map.insert((row,col),Block{ position : (row,col), value : '#' as char, distance : 0});
@@ -395,7 +410,7 @@ pub fn solve_part2(lines : &Vec<String>) -> usize {
 
   print_map_2(&map, &current_positions);
 
-  let retval = move_to_key_2(&map, &current_positions, &vec![], &mut HashMap::new());
+  let retval = move_to_key_2(&map, &current_positions, &vec![], &mut HashMap::new(), center);
 
   let labels = vec!["top left", "bottom right", "bottom left", "top right"];
   let mut distance = 0;
