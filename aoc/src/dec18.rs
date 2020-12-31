@@ -205,10 +205,8 @@ fn move_to_key(map : &HashMap<(usize,usize),Block>, current_position : (usize, u
     let key = format!("{}-{}-{}", block.position.0, block.position.1, map.values().filter(|b| b.is_key(&history)).map(|b| b.value).collect::<String>());
 
     if let Some(temp) = cache.get(&key) {
-      let mut front = history.iter().map(|b| (b.value,b.distance) ).collect::<Vec<(char,usize)>>();
-      let mut middle = vec![(block.value, block_copy.distance)];
+      let mut front = new_history.iter().map(|b| (b.value,b.distance) ).collect::<Vec<(char,usize)>>();
       let mut back = temp.clone();
-      front.append(&mut middle);
       front.append(&mut back);
       v_candidate = front;
 
@@ -286,7 +284,7 @@ fn create_complex_key_history(history : &Vec<Vec<Block>>) -> Vec<char> {
 }
 
 #[allow(dead_code)]
-fn move_to_key_2(map : &HashMap<(usize,usize),Block>, current_positions : &Vec<(usize, usize)>, history : &Vec<Vec<Block>>, cache : &mut HashMap<String,Vec<(char,usize)>>) -> Vec<Vec<(char,usize)>> {
+fn move_to_key_2(map : &HashMap<(usize,usize),Block>, current_positions : &Vec<(usize, usize)>, history : &Vec<Vec<Block>>, cache : &mut HashMap<String,Vec<Vec<(char,usize)>>>) -> Vec<Vec<(char,usize)>> {
   let mut candidate_list = vec![];
   let key_history = create_complex_key_history(history);
 
@@ -304,14 +302,16 @@ fn move_to_key_2(map : &HashMap<(usize,usize),Block>, current_positions : &Vec<(
                   .collect::<Vec<Block>>();
 
 
-    print!("{} {:?} ", which_robot, current_position);
-    if history.len() > 0 {
-      for _i in 0..history[which_robot].len() { print!(">"); }
-      print!("History {:?}", history[which_robot].iter().map(|b| b.value).collect::<Vec<char>>());
+    if true {
+      print!("{} {:?} ", which_robot, current_position);
+      if history.len() > 0 {
+        for _i in 0..history[which_robot].len() { print!(">"); }
+        print!("History {:?}", history[which_robot].iter().map(|b| b.value).collect::<Vec<char>>());
+      }
+      println!("Exploring {:?} options ({} keys left)", 
+        blocks.iter().map(|b| b.value).collect::<Vec<char>>(),
+        map.values().filter(|b| b.is_key_str(&key_history)).count());
     }
-    println!("Exploring {:?} options ({} keys left)", 
-      blocks.iter().map(|b| b.value).collect::<Vec<char>>(),
-      map.values().filter(|b| b.is_key_str(&key_history)).count());
 
     for block in blocks {
       let mut new_history : Vec<Vec<Block>> = vec![];
@@ -326,7 +326,31 @@ fn move_to_key_2(map : &HashMap<(usize,usize),Block>, current_positions : &Vec<(
       let mut new_positions = current_positions.clone();
       new_positions[which_robot] = block.position;
       new_history[which_robot].push(block.clone());
-      let candidate = move_to_key_2(&map, &new_positions, &new_history, cache);
+
+      let candidate;
+      let key = format!("{:?}-{}", new_positions, map.values().filter(|b| b.is_key_str(&key_history)).map(|b| b.value).collect::<String>());
+      if let Some(temp) = cache.get(&key) {
+        // println!("Found key {} {:?}", key, temp);
+
+        let mut cached_candidate = vec![vec![],vec![],vec![],vec![]];
+
+        for (which_history,cached_answer) in temp.iter().enumerate() {
+          cached_candidate[which_history] = new_history[which_history].iter().map(|b| (b.value,b.distance) ).collect::<Vec<(char,usize)>>();
+          cached_candidate[which_history].append(&mut cached_answer.clone());
+        }
+        candidate = cached_candidate;
+  
+      } else {
+        candidate = move_to_key_2(&map, &new_positions, &new_history, cache);
+        // println!("Storing key {} {:?}", key, candidate);
+        let mut cached_candidate = vec![vec![],vec![],vec![],vec![]];
+
+        for (which_history,cached_answer) in candidate.iter().enumerate() {
+          cached_candidate[which_history] = cached_answer[new_history[which_history].len()..].to_vec();
+        }
+        cache.insert(key, cached_candidate);
+      }
+
       candidate_list.push(candidate);
     }
   }
