@@ -9,6 +9,7 @@ mod tests {
 
 use std::collections::HashMap;
 use std::convert::TryInto;
+use std::time::Instant;
 
 #[derive(Debug,Clone,Copy)]
 pub struct Block {
@@ -42,6 +43,10 @@ impl Block {
   fn is_wall(&self) -> bool {
     return self.value == '#' || (self.value >= 'A' && self.value <= 'Z');
   }
+
+  fn distance(&self, position : (usize,usize)) -> usize {
+    return (position.0 as i32- self.position.0 as i32).abs() as usize + (position.1 as i32- self.position.1 as i32).abs() as usize;
+  }
 }
 
 fn path(map : &HashMap<(usize,usize),Block>, point_a : (usize,usize), point_b : (usize,usize), history : Vec<(usize,usize)>) -> Option<usize> {
@@ -52,7 +57,7 @@ fn path(map : &HashMap<(usize,usize),Block>, point_a : (usize,usize), point_b : 
     for n in b.get_neighbors() {
       if !history.contains(&n) {
         if let Some(n_o) = map.get(&n) {
-          if !n_o.is_wall() {
+          if !n_o.is_wall() && (!n_o.is_key() || n == point_b) {
             // println!("Calling path on {:?} seeking {:?} history {:?}", n, point_b, history);
             let mut new_history = history.clone();
             new_history.push(n);
@@ -68,7 +73,7 @@ fn path(map : &HashMap<(usize,usize),Block>, point_a : (usize,usize), point_b : 
   return None;
 }
 
-fn print_map(map : &HashMap<(usize,usize),Block>) {
+fn print_map(map : &HashMap<(usize,usize),Block>, current : (usize,usize)) {
   let max_row = map.keys().map(|(a,_b)| *a).max().unwrap();
   let max_col = map.keys().map(|(_a,b)| *b).max().unwrap();
   let min_row = map.keys().map(|(a,_b)| *a).min().unwrap();
@@ -77,10 +82,14 @@ fn print_map(map : &HashMap<(usize,usize),Block>) {
   println!(" ---- ");
   for r in min_row..=max_row {
     for c in min_col..=max_col {
-      if let Some(b) = map.get(&(r,c)) {
-        print!("{}", b.value);
+      if (r,c) == current {
+        print!("@");
       } else {
-        print!(" ");
+        if let Some(b) = map.get(&(r,c)) {
+          print!("{}", b.value);
+        } else {
+          print!(" ");
+        }
       }
     }
     println!();
@@ -88,43 +97,91 @@ fn print_map(map : &HashMap<(usize,usize),Block>) {
   }
 }
 
-fn move_to_key(map : &HashMap<(usize,usize),Block>, current_position : (usize, usize), history : Vec<Block>) -> Vec<(char,usize)> {
+fn move_to_key(map : HashMap<(usize,usize),Block>, current_position : (usize, usize), history : Vec<Block>, cache : &mut HashMap<String,Vec<(char,usize)>>) -> Vec<(char,usize)> {
   if map.values().filter(|b| b.is_key()).count() == 0 {
-    // print_map(&map);
     let retval = history.iter().map(|b| (b.value,b.distance) ).collect::<Vec<(char,usize)>>();
-    // println!("retval is {} {:?}", retval.iter().map(|(c,d)| d).sum::<usize>(), retval);
     return retval;
   }
 
-  let mut v = vec![('0',99999)];
-  for block in map.values()
-      .filter(|b| b.is_key())
-      .filter(|b| path(&map, current_position, b.position, vec![]) != None) {
+  let mut candidate_list : Vec<Vec<(char,usize)>> = vec![];
+  let blocks = map.values()
+                .filter(|b| b.is_key())
+                .map(|b| (b,path(&map, current_position, b.position, vec![])))
+                .filter(|(b,d)| *d != None)
+                .map(|(b,d)| Block{ position : b.position, distance : d.unwrap(), value : b.value})
+                .collect::<Vec<Block>>();
 
+  // if history.len() == 3  {
+    for _i in 0..history.len() { print!(">"); }
+    println!("History {:?} Exploring {:?} options", history.iter().map(|b| b.value).collect::<Vec<char>>(), blocks.iter().map(|b| b.value).collect::<Vec<char>>());
+  // }
+
+  for (i,block) in blocks.iter().enumerate() {
+    // println!("Exploring {:?}", block);
     let new_position = block.position;
-    if let Some(d) = path(&map, current_position, block.position, vec![]) {
-      let mut new_history = history.clone();
-      let mut block_copy = block.clone();
-      block_copy.distance = d;
-      new_history.push(block_copy);
-      // println!("{:?} to {} is {:?}", current_position, block.value, d);
-      let mut new_map = map.clone();
-      let door_vec = new_map.values().filter(|b| b.value == ('A' as u8 + block.value as u8 -b'a') as char).map(|b| b.position ).collect::<Vec<(usize,usize)>>();
-      if door_vec.len() > 0 {
-        new_map.get_mut(&door_vec[0]).unwrap().value = '.' // remove door
-      } 
-      new_map.get_mut(&new_position).unwrap().value = '.'; // remove key
+    let block_distance = block.distance;
 
-      let v_candidate= move_to_key(&new_map, new_position, new_history);
-      
-      if v_candidate.iter().map(|(c,d)| d).sum::<usize>() < v.iter().map(|(c,d)| d).sum::<usize>() {
-        println!("Found a new low {:?} {:?}",  v_candidate.iter().map(|(c,d)| d).sum::<usize>(), v_candidate.iter().map(|(c,d)| *c).collect::<Vec<char>>());
-        v = v_candidate;
-      }
+    // if history.iter().map(|b| b.distance).sum::<usize>() + d > v.iter().map(|(_c,d)| d).sum::<usize>() {
+    //   panic!("history distance {}, about to move {}, historical shortest distance {}", history.iter().map(|b| b.distance).sum::<usize>(), d, v.iter().map(|(_c,d)| d).sum::<usize>());
+    // }
+    let mut new_history = history.clone();
+    let mut block_copy = block.clone().to_owned();
+    block_copy.distance = block_distance;
+    new_history.push(block_copy);
+
+    // println!("{:?} to {} is {:?} ({} steps, historical distance {:?}) shortest {}", current_position, block.value, d, history.len(), history.iter().map(|b| b.distance).sum::<usize>(), shortest);
+    let mut new_map = map.clone();
+    let door_vec = new_map.values().filter(|b| b.value == ('A' as u8 + block.value as u8 -b'a') as char).map(|b| b.position ).collect::<Vec<(usize,usize)>>();
+    if door_vec.len() > 0 {
+      new_map.get_mut(&door_vec[0]).unwrap().value = '.' // remove door
+    } 
+    new_map.get_mut(&new_position).unwrap().value = '.'; // remove key
+
+    let v_candidate : Vec<(char,usize)>;
+    let start = Instant::now();
+    let key = format!("{:?} {:?}", new_position, new_map.values().filter(|b| b.is_key()).map(|b| b.value).collect::<Vec<char>>());
+
+    if let Some(temp) = cache.get(&key) {
+      // v_candidate = temp.clone();
+      let mut front = history.iter().map(|b| (b.value,b.distance) ).collect::<Vec<(char,usize)>>();
+      let mut middle = vec![(block.value, block_distance)];
+      let mut back = temp.clone()[front.len()+1..].to_vec();
+      front.append(&mut middle);
+      front.append(&mut back);
+      v_candidate = front;
+      // println!("found in cache {}, created {:?}", &key, v_candidate);
+    } else {
+      v_candidate= move_to_key(new_map.clone(), new_position, new_history.clone(), cache);
+      // println!("storing in cache {} - {:?}", &key, &v_candidate);
+      cache.insert(key,v_candidate.clone());
     }
-        
+    // println!("appending {:?} with {:?}", candidate_list, v_candidate);
+    candidate_list.push(v_candidate.clone());
+    candidate_list.dedup();
+    // println!("{:?}", v[0]);
+
+    if history.len() == 8 { 
+      // println!("After {}", block.value);
+      // print_map(&new_map, new_position); 
+      // println!("{} base distince {} distance {} in {} steps {:?}", i, history.iter().map(|b| b.distance).sum::<usize>(), v_candidate.iter().map(|(_c,d)| d).sum::<usize>(), v_candidate.len(), start.elapsed());      
+      // println!("cache size {}, result size {}",cache.len(), v.len());
+    }
   }
-  return v;
+  let mut minimum = candidate_list[0].iter().map(|(_c,distance)| distance).sum::<usize>();
+  let mut smallest = candidate_list[0].clone();
+  // println!("I have {} results", candidate_list.len());
+  if candidate_list.len() > 1 {
+    for a in &candidate_list {      
+      let my_size = a.iter().map(|(_c,distance)| distance).sum::<usize>();
+      if  my_size < minimum {
+        minimum = my_size ;
+        smallest = a.clone();
+      }
+      // println!("{:?}: {}", a, a.iter().map(|(c,d)| d).sum::<usize>());
+    }
+  }
+  return smallest;
+ 
 }
 
 pub fn solve_part1(lines : Vec<String>) {
@@ -148,6 +205,9 @@ pub fn solve_part1(lines : Vec<String>) {
     row = row + 1;
   }
 
-  print_map(&map);
-  println!("{:?}", move_to_key(&map, current_position, vec![]));
+  print_map(&map, current_position);
+
+  let retval = move_to_key(map, current_position, vec![], &mut HashMap::new());
+  println!("{:?}", retval);
+  println!("{}", retval.iter().map(|(_a,b)| b).sum::<usize>());
 }
