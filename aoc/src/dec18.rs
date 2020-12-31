@@ -5,13 +5,15 @@ mod tests {
     fn dec18_part1() {
       let lines: Vec<String> = include_str!("../inputs/dec18.txt").lines().map(|s| (&*s).to_string() ).collect();
       let start = Instant::now();
-      // assert!(6316==super::solve_part1(lines));
-      super::solve_part2(lines);
-      println!("Complete in {:?}", start.elapsed());
+      assert!(6316==super::solve_part1(&lines));
 //        Complete in 800.48883394s
 //        Complete in 787.981406902s
 //        Complete in 64.339802425s
 //        Complete in 46.228593998s
+
+      assert!(1648==super::solve_part2(&lines));
+//        Complete in 25.775287756s
+println!("Complete in {:?}", start.elapsed());
 
     }
 }
@@ -178,7 +180,7 @@ fn move_to_key(map : &HashMap<(usize,usize),Block>, current_position : (usize, u
   }
 
   let mut candidate_list : Vec<Vec<(char,usize)>> = vec![];
-  let start = Instant::now();
+  // let start = Instant::now();
   let key_history = history.iter().map(|b| b.value).collect::<Vec<char>>();
   let blocks = map.values()
                 .filter(|b| b.is_key_str(&key_history))
@@ -237,7 +239,7 @@ fn move_to_key(map : &HashMap<(usize,usize),Block>, current_position : (usize, u
 } 
 
 #[allow(dead_code)]
-pub fn solve_part1(lines : Vec<String>) -> usize {
+pub fn solve_part1(lines : &Vec<String>) -> usize {
 
   let mut map = HashMap::new();
   let mut row = 0;
@@ -260,14 +262,6 @@ pub fn solve_part1(lines : Vec<String>) -> usize {
 
   print_map(&map, current_position);
 
-  // let f_position = map.values().filter(|b| b.value == 'f').map(|b| b.position).collect::<Vec<(usize,usize)>>()[0];
-  // let start = Instant::now();
-  // println!("shortest path {:?}", path(&map, current_position, f_position, &vec![], &vec![]));
-  // println!("path time {:?}", start.elapsed());
-  // let start = Instant::now();
-  // println!("shortest path {:?}", path(&map, f_position, current_position, &vec![], &vec![]));
-  // println!("path time {:?}", start.elapsed());
-  // return 0;
   let retval = move_to_key(&map, current_position, &vec![], &mut HashMap::new());
   println!("{:?}", retval);
   println!("{}", retval.iter().map(|(_a,b)| b).sum::<usize>());
@@ -302,7 +296,7 @@ fn move_to_key_2(map : &HashMap<(usize,usize),Block>, current_positions : &Vec<(
                   .collect::<Vec<Block>>();
 
 
-    if true {
+    if false {
       print!("{} {:?} ", which_robot, current_position);
       if history.len() > 0 {
         for _i in 0..history[which_robot].len() { print!(">"); }
@@ -356,19 +350,6 @@ fn move_to_key_2(map : &HashMap<(usize,usize),Block>, current_positions : &Vec<(
   }
   candidate_list.dedup();
 
-  // if candidate_list.len() > 1 {
-  //   let labels = vec!["top left", "bottom right", "bottom left", "top right"];
-  //   for c in &candidate_list {
-  //     let mut candidate_distance = 0;
-  //     for (i,robot) in c.iter().enumerate() {
-  //       println!("{} {:?}", labels[i], robot);
-  //       candidate_distance = candidate_distance + robot.iter().map(|(_c,d)| d).sum::<usize>();
-  //     }
-  //     println!("total distance {}", candidate_distance);
-  //   }
-  //   panic!("stop");
-  // }
-
   let mut minimum = 9999;
   let mut smallest = vec![];
 
@@ -385,7 +366,7 @@ fn move_to_key_2(map : &HashMap<(usize,usize),Block>, current_positions : &Vec<(
   return smallest;
 }
 #[allow(dead_code)]
-pub fn solve_part2(lines : Vec<String>) {
+pub fn solve_part2(lines : &Vec<String>) -> usize {
 
   let mut map = HashMap::new();
   let mut row = 0;
@@ -424,5 +405,5 @@ pub fn solve_part2(lines : Vec<String>) {
   }
 
   println!("{}", distance);
-
+  return distance;
 }
