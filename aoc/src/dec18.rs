@@ -5,14 +5,12 @@ mod tests {
     fn dec18_part1() {
       let lines: Vec<String> = include_str!("../inputs/dec18.txt").lines().map(|s| (&*s).to_string() ).collect();
       let start = Instant::now();
-      super::solve_part1(lines);
+      assert!(6316==super::solve_part1(lines));
       // super::solve_part2(lines);
       println!("Complete in {:?}", start.elapsed());
-//        6316
 //        Complete in 800.48883394s
 //        Complete in 787.981406902s
-// 6316
-// Complete in 64.339802425s
+//        Complete in 64.339802425s
     }
 }
 
@@ -28,27 +26,58 @@ pub struct Block {
   distance : usize,
 }
 
+fn get_neighbors(position : &(usize,usize)) -> Vec<(usize,usize)> {
+  if position.0 == 0 || position.1 == 0 { panic!("Going off the map"); }
+  return vec![(position.0,position.1+1), 
+            (position.0+1,position.1),
+            ((position.0 as i32 - 1).try_into().unwrap(), position.1),
+            (position.0, (position.1 as i32 -1).try_into().unwrap())];
+
+}
 impl Block {
   #[allow(dead_code)]
   fn get_neighbors(&self) -> Vec<(usize,usize)> {
-    // let v : Vec<(i32,i32)> = vec![(-1,0), (0, -1), (0,1), (1,0)];
-    // let mut neighbors = vec![];
+    return get_neighbors(&self.position);
+  }
 
-    if self.position.0 == 0 || self.position.1 == 0 { panic!("Going off the map"); }
-    return vec![(self.position.0,self.position.1+1), 
-              (self.position.0+1,self.position.1),
-              ((self.position.0 as i32 - 1).try_into().unwrap(), self.position.1),
-              (self.position.0, (self.position.1 as i32 -1).try_into().unwrap())];
+  #[allow(dead_code)]
+  fn is_key_str(&self, history : &Vec<char>) -> bool {
+    if  self.value >= 'a' && self.value <= 'z' {
+      let is_key = !history.contains(&self.value);
+      return is_key;
+    }
+    return  false;
+
+  }
+  fn is_wall_str(&self, history : &Vec<char>) -> bool {
+    if self.value == '#' { return true; }
+    if self.value == '.' { return false; }
+    if self.value >= 'A' && self.value <= 'Z' {
+      let is_wall = !history.contains(&self.value);
+      return is_wall; // if my wall has a key in history, not a wall
+    }
+    return false;
+  }
+
+  #[allow(dead_code)]
+  fn is_key(&self, history : &Vec<Block>) -> bool {
+    if  self.value >= 'a' && self.value <= 'z' {
+      let is_key = history.iter().filter(|b| b.value == self.value).count() == 0;
+      return is_key;
+    }
+    return  false;
 
   }
   #[allow(dead_code)]
-  fn is_key(&self) -> bool {
-    return  self.value >= 'a' && self.value <= 'z';
+  fn is_wall(&self, history : &Vec<Block>) -> bool {
 
-  }
-  #[allow(dead_code)]
-  fn is_wall(&self) -> bool {
-    return self.value == '#' || (self.value >= 'A' && self.value <= 'Z');
+    if self.value == '#' { return true; }
+    if self.value == '.' { return false; }
+    if self.value >= 'A' && self.value <= 'Z' {
+      let is_wall = history.iter().filter(|b| b.value == ('a' as u8 + self.value as u8 - b'A') as char).count() == 0;
+      return is_wall; // if my wall has a key in history, not a wall
+    }
+    return false;
   }
   #[allow(dead_code)]
   fn distance(&self, position : (usize,usize)) -> usize {
@@ -56,23 +85,27 @@ impl Block {
   }
 }
 #[allow(dead_code)]
-fn path(map : &HashMap<(usize,usize),Block>, point_a : (usize,usize), point_b : (usize,usize), history : &Vec<(usize,usize)>) -> Option<usize> {
+fn path(map : &HashMap<(usize,usize),Block>, point_a : (usize,usize), point_b : (usize,usize), history : &Vec<(usize,usize)>, key_history : &Vec<Block>) -> Option<usize> {
   let mut min_distance = 9999;
+  let key_str = key_history.iter().map(|b| b.value).collect::<Vec<char>>();
+  let wall_str = key_history.iter().map(|b| (b'A' + b.value as u8 - b'a') as char).collect::<Vec<char>>();
 
+  // println!("key_str {}, wall_str {}", key_str, wall_str);
   if point_a == point_b { return Some(history.len()); }
 
-  if let Some(b) = map.get(&point_a) {
-    for n in b.get_neighbors() {
+  let neighbors = get_neighbors(&point_a);
+
+  // if let Some(b) = map.get(&point_a) {
+    for n in neighbors {
       if n == point_b {
         if history.len()+1 < min_distance {min_distance = history.len()+1; break; }
       } 
-      if !history.contains(&n) {
-        if let Some(n_o) = map.get(&n) {
-          if !n_o.is_wall() && !n_o.is_key() {
-            // println!("Calling path on {:?} seeking {:?} history {:?}", n, point_b, history);
+      if let Some(n_o) = map.get(&n) {
+        if !n_o.is_wall_str(&wall_str) && !n_o.is_key_str(&key_str) {
+          if !history.contains(&n) {
             let mut new_history = history.clone();
             new_history.push(n);
-            if let Some(d) = path(&map, n, point_b, &new_history) {
+            if let Some(d) = path(&map, n, point_b, &new_history, &key_history) {
               if d < min_distance {min_distance = d; }
             }
           }
@@ -80,7 +113,7 @@ fn path(map : &HashMap<(usize,usize),Block>, point_a : (usize,usize), point_b : 
       }
     }
     if min_distance < 9999 { return Some(min_distance) };
-  }
+  // }
   return None;
 }
 
@@ -136,7 +169,8 @@ fn print_map_2(map : &HashMap<(usize,usize),Block>, currents : Vec<(usize,usize)
 
 #[allow(dead_code)]
 fn move_to_key(map : &HashMap<(usize,usize),Block>, current_position : (usize, usize), history : &Vec<Block>, cache : &mut HashMap<String,Vec<(char,usize)>>) -> Vec<(char,usize)> {
-  if map.values().filter(|b| b.is_key()).count() == 0 {
+ 
+  if map.values().filter(|b| b.is_key(&history)).count() == 0 {
     let retval = history.iter().map(|b| (b.value,b.distance) ).collect::<Vec<(char,usize)>>();
     return retval;
   }
@@ -144,59 +178,52 @@ fn move_to_key(map : &HashMap<(usize,usize),Block>, current_position : (usize, u
   let mut candidate_list : Vec<Vec<(char,usize)>> = vec![];
   let start = Instant::now();
   let blocks = map.values()
-                .filter(|b| b.is_key())
-                .map(|b| (b,path(&map, b.position, current_position, &vec![])))
+                .filter(|b| b.is_key(&history))
+                .map(|b| (b,path(&map, b.position, current_position, &vec![], &history)))
                 .filter(|(_b,d)| *d != None)
                 .map(|(b,d)| Block{ position : b.position, distance : d.unwrap(), value : b.value})
                 .collect::<Vec<Block>>();
-  // println!("collecting valid destinations is {:?}", start.elapsed());
 
-  // if history.len() == 3  {
+  if false {
     for _i in 0..history.len() { print!(">"); }
-    println!("History {:?} Exploring {:?} options", history.iter().map(|b| b.value).collect::<Vec<char>>(), blocks.iter().map(|b| b.value).collect::<Vec<char>>());
-  // }
+    println!("History {:?} Exploring {:?} options ({} keys left)", 
+      history.iter().map(|b| b.value).collect::<Vec<char>>(), 
+      blocks.iter().map(|b| b.value).collect::<Vec<char>>(),
+      map.values().filter(|b| b.is_key(&history)).count());
+  }
 
   for (_i,block) in blocks.iter().enumerate() {
     let new_position = block.position;
     let block_distance = block.distance;
 
-    // if history.iter().map(|b| b.distance).sum::<usize>() + d > v.iter().map(|(_c,d)| d).sum::<usize>() {
-    //   panic!("history distance {}, about to move {}, historical shortest distance {}", history.iter().map(|b| b.distance).sum::<usize>(), d, v.iter().map(|(_c,d)| d).sum::<usize>());
-    // }
     let mut new_history = history.clone();
     let mut block_copy = block.clone().to_owned();
     block_copy.distance = block_distance;
     new_history.push(block_copy);
 
-    // println!("{:?} to {} is {:?} ({} steps, historical distance {:?}) shortest {}", current_position, block.value, d, history.len(), history.iter().map(|b| b.distance).sum::<usize>(), shortest);
-    let mut new_map = map.clone();
-    let door_vec = new_map.values().filter(|b| b.value == ('A' as u8 + block.value as u8 -b'a') as char).map(|b| b.position ).collect::<Vec<(usize,usize)>>();
-    if door_vec.len() > 0 {
-      new_map.get_mut(&door_vec[0]).unwrap().value = '.' // remove door
-    } 
-    new_map.get_mut(&new_position).unwrap().value = '.'; // remove key
-
     let v_candidate : Vec<(char,usize)>;
     // let start = Instant::now();
-    let key = format!("{:?} {:?}", new_position, new_map.values().filter(|b| b.is_key()).map(|b| b.value).collect::<Vec<char>>());
+    let key = format!("{:?} {:?}", new_position, map.values().filter(|b| b.is_key(&history)).map(|b| b.value).collect::<Vec<char>>());
 
     if let Some(temp) = cache.get(&key) {
       let mut front = history.iter().map(|b| (b.value,b.distance) ).collect::<Vec<(char,usize)>>();
       let mut middle = vec![(block.value, block_distance)];
-      let mut back = temp.clone()[front.len()+1..].to_vec();
+      let mut back = temp.clone();
       front.append(&mut middle);
       front.append(&mut back);
       v_candidate = front;
       // println!("found in cache {}, created {:?}", &key, v_candidate);
     } else {
-      v_candidate= move_to_key(&new_map, new_position, &new_history, cache);
+      v_candidate= move_to_key(&map, new_position, &new_history, cache);
       // println!("storing in cache {} - {:?}", &key, &v_candidate);
-      cache.insert(key,v_candidate.clone());
+      cache.insert(key,v_candidate.clone()[history.len()+1..].to_vec());
     }
     // println!("appending {:?} with {:?}", candidate_list, v_candidate);
     candidate_list.push(v_candidate.clone());
-    // candidate_list.dedup();
+    candidate_list.dedup();
   }
+
+  if candidate_list.len() == 0 { return vec![]; }
 
   let mut minimum = candidate_list[0].iter().map(|(_c,distance)| distance).sum::<usize>();
   let mut smallest = candidate_list[0].clone();
@@ -216,7 +243,7 @@ fn move_to_key(map : &HashMap<(usize,usize),Block>, current_position : (usize, u
 } 
 
 #[allow(dead_code)]
-pub fn solve_part1(lines : Vec<String>) {
+pub fn solve_part1(lines : Vec<String>) -> usize {
 
   let mut map = HashMap::new();
   let mut row = 0;
@@ -241,12 +268,16 @@ pub fn solve_part1(lines : Vec<String>) {
 
   // let f_position = map.values().filter(|b| b.value == 'f').map(|b| b.position).collect::<Vec<(usize,usize)>>()[0];
   // let start = Instant::now();
-  // println!("shortest path {:?}", path(&map, current_position, f_position, &vec![]));
+  // println!("shortest path {:?}", path(&map, current_position, f_position, &vec![], &vec![]));
   // println!("path time {:?}", start.elapsed());
-  // return;
+  // let start = Instant::now();
+  // println!("shortest path {:?}", path(&map, f_position, current_position, &vec![], &vec![]));
+  // println!("path time {:?}", start.elapsed());
+  // return 0;
   let retval = move_to_key(&map, current_position, &vec![], &mut HashMap::new());
   println!("{:?}", retval);
   println!("{}", retval.iter().map(|(_a,b)| b).sum::<usize>());
+  retval.iter().map(|(_a,b)| b).sum::<usize>()
 }
 
 #[allow(dead_code)]
