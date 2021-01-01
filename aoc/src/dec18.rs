@@ -18,12 +18,13 @@ println!("Complete in {:?}", start.elapsed());
     }
 }
 
-use std::time::Instant;
+// use std::time::Instant;
 use std::collections::HashMap;
 use std::convert::TryInto;
-// use rayon::prelude::*;
+// use cached::proc_macro::cached;
+// use cached::SizedCache;
 
-#[derive(Debug,Clone,Copy)]
+#[derive(Debug,Clone,Copy,Eq,PartialEq,Hash)]
 pub struct Block {
   position : (usize,usize),
   value : char,
@@ -91,8 +92,17 @@ impl Block {
     return (position.0 as i32- self.position.0 as i32).abs() as usize + (position.1 as i32- self.position.1 as i32).abs() as usize;
   }
 }
-#[allow(dead_code)]
-fn path(map : &HashMap<(usize,usize),Block>, point_a : (usize,usize), point_b : (usize,usize), history : &Vec<(usize,usize)>, key_history : &Vec<char>) -> Option<usize> {
+// #[allow(dead_code)]
+// #[cached(
+//   type = "SizedCache<String, Option<usize>>",
+//   create = "{ SizedCache::with_size(1000) }",
+//   convert = r#"{ format!("{},{},{},{}{:?}{}",point_a.0,point_a.1,point_b.0, point_b.1,history,key_history.iter().collect::<String>()) }"#
+// )]
+fn path(map : &HashMap<(usize,usize),Block>, 
+        point_a : (usize,usize), 
+        point_b : (usize,usize), 
+        history : &Vec<(usize,usize)>, 
+        key_history : &Vec<char>) -> Option<usize> {
   let mut min_distance = 9999;
   let key_str = key_history;
   
@@ -120,6 +130,7 @@ fn path(map : &HashMap<(usize,usize),Block>, point_a : (usize,usize), point_b : 
 
     return None;
 }
+
 
 #[allow(dead_code)]
 fn print_map(map : &HashMap<(usize,usize),Block>, current : (usize,usize)) {
