@@ -6,6 +6,7 @@ mod tests {
       let lines: Vec<String> = include_str!("../inputs/dec20.txt").lines().map(|s| (&*s).to_string() ).collect();
       let start = Instant::now();
       super::solve_part1(&lines);
+      // super::solve_part2(&lines);
       println!("Complete in {:?}", start.elapsed());
 
     }
@@ -14,17 +15,20 @@ mod tests {
 use std::collections::HashMap;
 use std::convert::TryInto;
 
-#[derive(Debug,Clone,Copy,Eq,PartialEq,Hash)]
+#[derive(Debug,Clone,Eq,PartialEq,Hash)]
 pub enum Portal {
-  Up((usize,usize)),
-  Down((usize,usize)),
+  Same((usize,usize)),
+  Up((usize,usize),String),
+  Down((usize,usize),String),
 }
 
-#[derive(Debug,Clone,Copy,Eq,PartialEq,Hash)]
+#[derive(Debug,Clone,Eq,PartialEq,Hash)]
 pub struct Block {
   position : (usize,usize),
   value : char,
   distance : usize,
+  level : i32,
+  label : String,
 }
 
 pub struct Donut {
@@ -35,22 +39,19 @@ pub struct Donut {
 }
 
 impl Donut {
-  fn get_portal_neighbors(&self, position : &(usize,usize)) -> Vec<(usize,usize)> {
+  fn get_portal_neighbors(&self, position : &(usize,usize)) -> Vec<Portal> {
     for p in self.portals.values() {
-      if p.contains(&Portal::Up(*position)) {
-        let my_point= p.iter().filter(|each_point| **each_point != Portal::Up(*position)).map(|each_point| {if let Portal::Down(p) = *each_point { p } else {panic!("unreachable")} }).collect::<Vec<(usize,usize)>>();
-        return my_point;
-      }
-      if p.contains(&Portal::Down(*position)) {
-        let my_point= p.iter().filter(|each_point| **each_point != Portal::Down(*position)).map(|each_point| {if let Portal::Up(p) = *each_point { p } else {panic!("unreachable")}}).collect::<Vec<(usize,usize)>>();
+      if p.iter().filter(|each_portal| enum_unwrap(*each_portal) == *position).count() > 0 {
+      // if p.contains(&Portal::Up(*position)) {
+        let my_point= p.iter().filter(|each_point| enum_unwrap(*each_point) != *position).map(|each_point| each_point.clone()).collect::<Vec<Portal>>();
         return my_point;
       }
     }
     return vec![];
   }
 
-  fn get_neighbors(&self, position : &(usize,usize)) -> Vec<(usize,usize)> {
-    let mut all_neighbors = get_neighbors(position).iter().filter(|p| self.map.get(&p) != None && !self.map.get(&p).unwrap().is_wall()).map(|p| *p).collect::<Vec<(usize,usize)>>();
+  fn get_neighbors(&self, position : &(usize,usize)) -> Vec<Portal> {
+    let mut all_neighbors = get_neighbors(position).iter().filter(|p| self.map.get(&p) != None && !self.map.get(&p).unwrap().is_wall()).map(|p| Portal::Same(*p)).collect::<Vec<Portal>>();
 
     all_neighbors.append(&mut self.get_portal_neighbors(position));
     return all_neighbors;
@@ -90,33 +91,78 @@ impl Block {
   }
 }
 
+fn net_levels(v : &Vec<Portal>) -> i32 {
+  let mut net_levels = 0;
+  for p in v {
+    net_levels = net_levels + match p {
+      Portal::Same(_n) => 0,
+      Portal::Up(_n,_label)  => -1,
+      Portal::Down(_n,_label) => 1
+    }
+  }
+  return net_levels;
+}
+
+fn enum_unwrap(p : &Portal) -> (usize,usize) {
+  match p {
+    Portal::Same(result) => *result,
+    Portal::Up(result,_label)  => *result,
+    Portal::Down(result,_label) => *result
+  }
+}
+
+fn block_format(b : &Block) -> String {
+  return format!("({},{},{}) {} ",b.position.0, b.position.1, b.level, b.label);
+
+}
+
+fn enum_unwrap_format(p : &Portal) -> String {
+  match p {
+    Portal::Same(result) => format!(""),
+    Portal::Up(result,label)  => format!("Up[{}] ",label),
+    Portal::Down(result,label) => format!("Down[{}] ",label),
+  }
+}
+
 fn path(donut : &Donut, 
         point_a : (usize,usize), 
         point_b : (usize,usize), 
-        history : &Vec<(usize,usize)>) -> Option<usize> {
+        history : &Vec<Block>, three_d : bool) -> Option<usize> {
   let mut min_distance = 9999;
   
-  if point_a == point_b { return Some(history.len()); }
+  if point_a == point_b { 
+    if three_d && history.last().unwrap().level == 0 { 
+      println!("{:?} Net levels {}", history.iter().map(|b| block_format(b)).collect::<String>(),history.last().unwrap().level); 
+      return Some(history.len()); 
+    }
+    else if !three_d { return Some(history.len()); }
+  }
 
   let neighbors = donut.get_neighbors(&point_a);
-
+  // println!("history {} exploring {:?}",history.iter().map(|p| block_format(p)).collect::<String>(), neighbors);
     for n in neighbors {
-      if n == point_b {
-        if history.len()+1 < min_distance {min_distance = history.len()+1; break; }
-      } 
-      if let Some(n_o) = donut.map.get(&n) {
+      if let Some(n_o) = donut.map.get(&enum_unwrap(&n)) {
         if !n_o.is_wall() {
-          if !history.contains(&n) {
+          let mut block_copy = n_o.clone();
+          match &n {
+            Portal::Same(result) => { if let Some(b) = history.last() { block_copy.level = b.level;} else {block_copy.level = 0} }
+            Portal::Up(result,label) => { block_copy.label = label.to_string(); if let Some(b) = history.last() { block_copy.level = b.level-1;} else {block_copy.level = 0} }
+            Portal::Down(result,label) => { block_copy.label = label.to_string(); if let Some(b) = history.last() { block_copy.level = b.level+1;} else {block_copy.level = 0} }
+          }
+          if history.iter().filter(|b| b.position.0 == n_o.position.0 && b.position.1 == n_o.position.1 && (!three_d || b.level == block_copy.level)).count() == 0 {
             let mut new_history = history.clone();
-            new_history.push(n);
-            if let Some(d) = path(&donut, n, point_b, &new_history) {
+            if block_copy.level.abs() > 11 { return None; }
+            new_history.push(block_copy);
+            if let Some(d) = path(&donut, enum_unwrap(&n), point_b, &new_history, three_d) {
               if d < min_distance {min_distance = d; }
             }
           }
         }
       }
     }
-    if min_distance < 9999 { return Some(min_distance) };
+    if min_distance < 9999 {   
+      return Some(min_distance) ;
+    }
 
     return None;
 }
@@ -152,9 +198,7 @@ fn quick_get(lines : &Vec<String>, r : usize, c : usize) -> char {
   return lines[r].as_bytes()[c] as char;
 }
 
-#[allow(dead_code)]
-pub fn solve_part1(lines : &Vec<String>) -> usize {
-
+fn load_donut(lines : &Vec<String>) -> Donut {
   let mut map = HashMap::new();
   let mut start = (0,0);
   let mut end = (0,0);
@@ -162,15 +206,12 @@ pub fn solve_part1(lines : &Vec<String>) -> usize {
 
   let max_row = lines.len();
   let max_col = lines[0].as_bytes().len();
-  let mut row = 0;
-  let mut col = 0;
-  let mut current_position = (0,0);
 
   for r in 0..max_row {
     for c in 0..max_col {
       let spot = quick_get(&lines, r, c);
       let mut portal_key : String = "".to_string();
-      let mut portal_point : Portal = Portal::Up((0,0));
+      let mut portal_point : Portal = Portal::Up((0,0),"".to_string());
       if spot >= 'A' && spot <= 'Z' {
         let next = quick_get(&lines,r,c+1);
         if next >= 'A' && next <= 'Z' {
@@ -178,16 +219,16 @@ pub fn solve_part1(lines : &Vec<String>) -> usize {
 
           if quick_get(&lines,r,c+2) == '.' {   
             if r<2 || r >=max_row-2 || c<2 || c >=max_col-2 {             
-              portal_point = Portal::Down((r-2,c));    
+              portal_point = Portal::Down((r-2,c),portal_key.to_string());    
             } else {
-              portal_point = Portal::Up((r-2,c));    
+              portal_point = Portal::Up((r-2,c),portal_key.to_string());    
 
             }
           } else if quick_get(&lines,r,c-1) == '.' {
             if r<2 || r >=max_row-2 || c<2 || c >=max_col-2 {             
-              portal_point = Portal::Down((r-2,c-3));
+              portal_point = Portal::Down((r-2,c-3),portal_key.to_string());
             } else {
-              portal_point = Portal::Up((r-2,c-3));
+              portal_point = Portal::Up((r-2,c-3),portal_key.to_string());
             }
           }
 
@@ -198,30 +239,24 @@ pub fn solve_part1(lines : &Vec<String>) -> usize {
           portal_key = format!("{}{}",spot,next);
           if quick_get(&lines,r+2,c) == '.' {
             if r<2 || r >=max_row-2 || c<2 || c >=max_col-2 {
-              portal_point = Portal::Down((r,c-2));
+              portal_point = Portal::Down((r,c-2),portal_key.to_string());
 
             } else {
-              portal_point = Portal::Up((r,c-2));
+              portal_point = Portal::Up((r,c-2),portal_key.to_string());
             }
           } else if quick_get(&lines,r-1,c) == '.' {
             if r<2 || r >=max_row-2 || c<2 || c >=max_col-2 {
-              portal_point = Portal::Down((r-3,c-2));
+              portal_point = Portal::Down((r-3,c-2),portal_key.to_string());
             } else {
-              portal_point = Portal::Up((r-3,c-2));
+              portal_point = Portal::Up((r-3,c-2),portal_key.to_string());
             }
           }
         }
 
         if portal_key == "AA" {
-          start = match portal_point {
-            Portal::Up(point) => point,
-            Portal::Down(point) => point
-          };
+          start = enum_unwrap(&portal_point);
         } else if portal_key == "ZZ" {
-          end = match portal_point {
-            Portal::Up(point) => point,
-            Portal::Down(point) => point
-          };
+          end = enum_unwrap(&portal_point);
         }else if portal_key != "" {
           if let Some(p) = portals.get_mut(&portal_key.to_string()) {
             p.push(portal_point);          
@@ -233,19 +268,37 @@ pub fn solve_part1(lines : &Vec<String>) -> usize {
     }
   }
 
-  println!("{:?}", portals);
+  // println!("{:?}", portals);
 
   for (row,line) in lines[2..=max_row-2].iter().enumerate() {
     for (col,block) in line.as_bytes()[2..=max_col-2].iter().enumerate() {
       if *block == b'#' || *block == b'.' {
-        map.insert((row,col),Block{ position : (row,col), value : *block as char, distance : 0});
+        map.insert((row,col),Block{ position : (row,col), value : *block as char, distance : 0, level : 0, label : "".to_string() });
       }
     }
   }
   let donut = Donut { map : map, start : start, end : end, portals : portals };
-  println!("{:?}", donut.get_neighbors(&(4,7)));
-  print_map(&donut.map, start);
-  println!("{:?}", path(&donut, start, end,&vec![]));
-  println!("{:?}", donut.get_neighbors(&(4,7)));
+  return donut;
+}
+
+#[allow(dead_code)]
+pub fn solve_part1(lines : &Vec<String>) -> usize {
+
+  let donut = load_donut(lines);
+  
+  print_map(&donut.map, donut.start);
+  println!("{:?}", path(&donut, donut.start, donut.end,&vec![], false));
+
+  return 0;
+}
+
+#[allow(dead_code)]
+pub fn solve_part2(lines : &Vec<String>) -> usize {
+
+  let donut = load_donut(lines);
+  
+  print_map(&donut.map, donut.start);
+  println!("part 2 {:?}", path(&donut, donut.start, donut.end,&vec![], true));
+
   return 0;
 }
