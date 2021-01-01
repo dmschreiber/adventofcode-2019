@@ -15,6 +15,12 @@ use std::collections::HashMap;
 use std::convert::TryInto;
 
 #[derive(Debug,Clone,Copy,Eq,PartialEq,Hash)]
+pub enum Portal {
+  Up((usize,usize)),
+  Down((usize,usize)),
+}
+
+#[derive(Debug,Clone,Copy,Eq,PartialEq,Hash)]
 pub struct Block {
   position : (usize,usize),
   value : char,
@@ -25,14 +31,18 @@ pub struct Donut {
   map : HashMap<(usize,usize),Block>,
   start : (usize,usize),
   end : (usize,usize),
-  portals : HashMap<String,Vec<(usize,usize)>>,
+  portals : HashMap<String,Vec<Portal>>,
 }
 
 impl Donut {
   fn get_portal_neighbors(&self, position : &(usize,usize)) -> Vec<(usize,usize)> {
     for p in self.portals.values() {
-      if p.contains(position) {
-        let my_point= p.iter().filter(|each_point| *each_point != position).map(|each_point| *each_point).collect::<Vec<(usize,usize)>>();
+      if p.contains(&Portal::Up(*position)) {
+        let my_point= p.iter().filter(|each_point| **each_point != Portal::Up(*position)).map(|each_point| {if let Portal::Down(p) = *each_point { p } else {panic!("unreachable")} }).collect::<Vec<(usize,usize)>>();
+        return my_point;
+      }
+      if p.contains(&Portal::Down(*position)) {
+        let my_point= p.iter().filter(|each_point| **each_point != Portal::Down(*position)).map(|each_point| {if let Portal::Up(p) = *each_point { p } else {panic!("unreachable")}}).collect::<Vec<(usize,usize)>>();
         return my_point;
       }
     }
@@ -148,7 +158,7 @@ pub fn solve_part1(lines : &Vec<String>) -> usize {
   let mut map = HashMap::new();
   let mut start = (0,0);
   let mut end = (0,0);
-  let mut portals : HashMap<String,Vec<(usize,usize)>>= HashMap::new();
+  let mut portals : HashMap<String,Vec<Portal>>= HashMap::new();
 
   let max_row = lines.len();
   let max_col = lines[0].as_bytes().len();
@@ -160,16 +170,25 @@ pub fn solve_part1(lines : &Vec<String>) -> usize {
     for c in 0..max_col {
       let spot = quick_get(&lines, r, c);
       let mut portal_key : String = "".to_string();
-      let mut portal_point = (0,0);
+      let mut portal_point : Portal = Portal::Up((0,0));
       if spot >= 'A' && spot <= 'Z' {
         let next = quick_get(&lines,r,c+1);
         if next >= 'A' && next <= 'Z' {
           portal_key = format!("{}{}",spot,next);
 
           if quick_get(&lines,r,c+2) == '.' {   
-            portal_point = (r-2,c);        
+            if r<2 || r >=max_row-2 || c<2 || c >=max_col-2 {             
+              portal_point = Portal::Down((r-2,c));    
+            } else {
+              portal_point = Portal::Up((r-2,c));    
+
+            }
           } else if quick_get(&lines,r,c-1) == '.' {
-            portal_point = (r-2,c-3);
+            if r<2 || r >=max_row-2 || c<2 || c >=max_col-2 {             
+              portal_point = Portal::Down((r-2,c-3));
+            } else {
+              portal_point = Portal::Up((r-2,c-3));
+            }
           }
 
         }
@@ -177,17 +196,32 @@ pub fn solve_part1(lines : &Vec<String>) -> usize {
         let next = quick_get(&lines,r+1,c);
         if next >= 'A' && next <= 'Z' {
           portal_key = format!("{}{}",spot,next);
-          if quick_get(&lines,r+2,c) == '.' {            
-            portal_point = (r,c-2);
+          if quick_get(&lines,r+2,c) == '.' {
+            if r<2 || r >=max_row-2 || c<2 || c >=max_col-2 {
+              portal_point = Portal::Down((r,c-2));
+
+            } else {
+              portal_point = Portal::Up((r,c-2));
+            }
           } else if quick_get(&lines,r-1,c) == '.' {
-            portal_point = (r-3,c-2);
+            if r<2 || r >=max_row-2 || c<2 || c >=max_col-2 {
+              portal_point = Portal::Down((r-3,c-2));
+            } else {
+              portal_point = Portal::Up((r-3,c-2));
+            }
           }
         }
 
         if portal_key == "AA" {
-          start = portal_point;
+          start = match portal_point {
+            Portal::Up(point) => point,
+            Portal::Down(point) => point
+          };
         } else if portal_key == "ZZ" {
-          end = portal_point;
+          end = match portal_point {
+            Portal::Up(point) => point,
+            Portal::Down(point) => point
+          };
         }else if portal_key != "" {
           if let Some(p) = portals.get_mut(&portal_key.to_string()) {
             p.push(portal_point);          
@@ -212,5 +246,6 @@ pub fn solve_part1(lines : &Vec<String>) -> usize {
   println!("{:?}", donut.get_neighbors(&(4,7)));
   print_map(&donut.map, start);
   println!("{:?}", path(&donut, start, end,&vec![]));
+  println!("{:?}", donut.get_neighbors(&(4,7)));
   return 0;
 }
