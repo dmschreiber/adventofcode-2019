@@ -12,6 +12,7 @@ mod tests {
       // part 2 7366
       // Complete in 900.929033168s
     }
+    use std::thread::Builder;
 
     #[test]
     fn dec20_playground() {
@@ -25,6 +26,8 @@ mod tests {
       let start = Instant::now();
       println!("{:?}",super::simple_path(&donut, a, b, &vec![]));
       println!("Complete in {:?}", start.elapsed());
+      let num: u64 = 100_000;
+      println!("{:?}", super::simple_navigate_to_portal(&donut, (donut.start.0,donut.start.1,0), None, 7500, 0));
     }
 }
 
@@ -198,6 +201,73 @@ fn path(donut : &Donut,
     }
 
     return None;
+}
+
+fn simple_navigate_to_portal(donut : &Donut, current_location : (usize,usize,i32), last_location : Option<(usize,usize,i32)>, max_len : usize, distance_so_far : usize) -> Option<usize> {
+  let mut shortest_path = None;
+  let effective_last_location;
+  if last_location == None {
+    effective_last_location = current_location;
+  } else {
+    effective_last_location = last_location.unwrap();
+  }
+
+  // if current_location.2 > 15 { return None; }
+  if distance_so_far > max_len { return None; }
+  if let Some(distance) = more_simple_path(&donut, (current_location.0,current_location.1), donut.end, (effective_last_location.0,effective_last_location.1)) {
+    if effective_last_location.2 == 0 {
+      println!("Found a solution");
+
+      return Some(distance_so_far + distance);
+    }
+  }
+
+  let mut destinations = vec![];
+  for portals_vectors in donut.portals.values() {
+    for portal in portals_vectors {
+      let d = match portal {
+        Portal::Up(pos,label) => (*pos,label,more_simple_path(&donut, *pos, (current_location.0,current_location.1), (effective_last_location.0,effective_last_location.1))),
+        Portal::Down(pos,label) if effective_last_location.2 > 0 => (*pos,label,more_simple_path(&donut, *pos, (current_location.0,current_location.1), (effective_last_location.0,effective_last_location.1))),
+        Portal::Down(pos,label) if effective_last_location.2 <= 0 => (*pos,label,None),
+        _ => panic!("unreachable")
+      };      
+      if let Some(distance) = d.2 {
+        if distance == 0 { break; }
+        destinations.push(Block{ position : d.0, label : (*d.1).clone(), distance : distance, level : current_location.2, value : '.'});
+      }
+    }
+  }
+
+  // println!("Exploring {:?}", destinations);
+  for block in destinations {
+    let portal_match = donut.get_portal_neighbors(&block.position);
+    let new_position;
+    match &portal_match[0] {
+      Portal::Up(location,label) => {new_position = (location.0, location.1, block.level-1)},
+      Portal::Down(location,label) => {new_position = (location.0, location.1, block.level+1)},
+      _ => {panic!("non portal"); }
+    }
+
+    if new_position.0 == effective_last_location.0 && new_position.1 == effective_last_location.1 && new_position.2 == effective_last_location.2 {
+      panic!("calling navigate to portal with effective last location");
+    }
+
+
+    // println!("Calling navigate to portal {} with {:?} and last {:?}", block.label, new_position, Some((block.position.0,block.position.1,new_position.2)));
+    if let Some(new_distance) = simple_navigate_to_portal(&donut, new_position, Some((block.position.0,block.position.1,new_position.2)), max_len, distance_so_far + block.distance + 1) {
+      // return Some(block.distance + 1 + new_distance);
+      let candidate = new_distance;
+      if shortest_path != None {
+        if candidate < shortest_path.unwrap() {
+          shortest_path = Some(candidate);
+        }
+      } else {
+        shortest_path = Some(candidate);
+      }
+
+    }
+  }
+  return shortest_path;
 }
 
 fn navigate_to_portal(donut : &Donut, current_location : (usize,usize), block_history : &Vec<Block>, max_len : usize) -> Vec<Block> {
@@ -481,10 +551,10 @@ pub fn solve_part2(lines : &Vec<String>) -> usize {
   print_map(&donut.map, donut.start);
   let mut max = 7500;
   loop { 
+    println!("trying {}", max);
     let retval = navigate_to_portal(&donut, donut.start, &vec![],max);
     if retval.len() == 0 {
       max += 1000;
-      println!("trying {}", max);
     } else {
       println!("path [{:?}]", retval.iter().map(|b| format!("{}{}({})",b.label.to_string(),b.level,b.distance)).collect::<Vec<String>>().join(","));
 
