@@ -3,31 +3,27 @@ mod tests {
       use std::time::Instant;
 
       #[test]
-    fn dec20_part1() {
+    fn dec20_solve() {
       let lines: Vec<String> = include_str!("../inputs/dec20.txt").lines().map(|s| (&*s).to_string() ).collect();
       let start = Instant::now();
       assert!(620==super::solve_part1(&lines));
       super::solve_part2(&lines);
       println!("Complete in {:?}", start.elapsed());
+      
       // part 2 7366
-      // Complete in 900.929033168s
+//        Complete in 900.929033168s
+//        part 2 Some(7366)
+//        Complete in 62.028602766s
     }
-    use std::thread::Builder;
 
     #[test]
     fn dec20_playground() {
       let lines: Vec<String> = include_str!("../inputs/dec20.txt").lines().map(|s| (&*s).to_string() ).collect();
-      let a = (1,1);
-      let b = (33,37);
       let donut = super::load_donut(&lines);
       let start = Instant::now();
-      println!("{:?}",super::more_simple_path(&donut, a, b, a));
-      println!("Complete in {:?}", start.elapsed());
-      let start = Instant::now();
-      println!("{:?}",super::simple_path(&donut, a, b, &vec![]));
-      println!("Complete in {:?}", start.elapsed());
-      let num: u64 = 100_000;
+
       println!("{:?}", super::simple_navigate_to_portal(&donut, (donut.start.0,donut.start.1,0), None, 7500, 0));
+      println!("Complete in {:?}", start.elapsed());
     }
 }
 
@@ -125,17 +121,17 @@ impl Block {
   }
 }
 
-fn net_levels(v : &Vec<Portal>) -> i32 {
-  let mut net_levels = 0;
-  for p in v {
-    net_levels = net_levels + match p {
-      Portal::Same(_n) => 0,
-      Portal::Up(_n,_label)  => -1,
-      Portal::Down(_n,_label) => 1
-    }
-  }
-  return net_levels;
-}
+// fn net_levels(v : &Vec<Portal>) -> i32 {
+//   let mut net_levels = 0;
+//   for p in v {
+//     net_levels = net_levels + match p {
+//       Portal::Same(_n) => 0,
+//       Portal::Up(_n,_label)  => -1,
+//       Portal::Down(_n,_label) => 1
+//     }
+//   }
+//   return net_levels;
+// }
 
 fn enum_unwrap(p : &Portal) -> (usize,usize) {
   match p {
@@ -152,11 +148,12 @@ fn block_format(b : &Block) -> String {
   } else {return "".to_string(); }
 }
 
+#[allow(dead_code)]
 fn enum_unwrap_format(p : &Portal) -> String {
   match p {
-    Portal::Same(result) => format!(""),
-    Portal::Up(result,label)  => format!("Up[{}] ",label),
-    Portal::Down(result,label) => format!("Down[{}] ",label),
+    Portal::Same(_result) => format!(""),
+    Portal::Up(_result,label)  => format!("Up[{}] ",label),
+    Portal::Down(_result,label) => format!("Down[{}] ",label),
   }
 }
 
@@ -181,9 +178,9 @@ fn path(donut : &Donut,
         if !n_o.is_wall() {
           let mut block_copy = n_o.clone();
           match &n {
-            Portal::Same(result) => { if let Some(b) = history.last() { block_copy.level = b.level;} else {block_copy.level = 0} }
-            Portal::Up(result,label) => { block_copy.label = label.to_string(); if let Some(b) = history.last() { block_copy.level = b.level-1;} else {block_copy.level = 0} }
-            Portal::Down(result,label) => { block_copy.label = label.to_string(); if let Some(b) = history.last() { block_copy.level = b.level+1;} else {block_copy.level = 0} }
+            Portal::Same(_result) => { if let Some(b) = history.last() { block_copy.level = b.level;} else {block_copy.level = 0} }
+            Portal::Up(_result,label) => { block_copy.label = label.to_string(); if let Some(b) = history.last() { block_copy.level = b.level-1;} else {block_copy.level = 0} }
+            Portal::Down(_result,label) => { block_copy.label = label.to_string(); if let Some(b) = history.last() { block_copy.level = b.level+1;} else {block_copy.level = 0} }
           }
           if history.iter().filter(|b| b.position.0 == n_o.position.0 && b.position.1 == n_o.position.1 && (!three_d || b.level == block_copy.level)).count() == 0 {
             let mut new_history = history.clone();
@@ -203,6 +200,11 @@ fn path(donut : &Donut,
     return None;
 }
 
+#[cached(
+  type = "SizedCache<String, Option<usize>>",
+  create = "{ SizedCache::with_size(10000) }",
+  convert = r#"{ format!("{},{},{},{:?},{},{}",current_location.0,current_location.1,current_location.2,last_location,max_len, distance_so_far) }"#
+)]
 fn simple_navigate_to_portal(donut : &Donut, current_location : (usize,usize,i32), last_location : Option<(usize,usize,i32)>, max_len : usize, distance_so_far : usize) -> Option<usize> {
   let mut shortest_path = None;
   let effective_last_location;
@@ -216,7 +218,7 @@ fn simple_navigate_to_portal(donut : &Donut, current_location : (usize,usize,i32
   if distance_so_far > max_len { return None; }
   if let Some(distance) = more_simple_path(&donut, (current_location.0,current_location.1), donut.end, (effective_last_location.0,effective_last_location.1)) {
     if effective_last_location.2 == 0 {
-      println!("Found a solution");
+      println!("Found a solution {}", distance+distance_so_far);
 
       return Some(distance_so_far + distance);
     }
@@ -243,8 +245,8 @@ fn simple_navigate_to_portal(donut : &Donut, current_location : (usize,usize,i32
     let portal_match = donut.get_portal_neighbors(&block.position);
     let new_position;
     match &portal_match[0] {
-      Portal::Up(location,label) => {new_position = (location.0, location.1, block.level-1)},
-      Portal::Down(location,label) => {new_position = (location.0, location.1, block.level+1)},
+      Portal::Up(location,_label) => {new_position = (location.0, location.1, block.level-1)},
+      Portal::Down(location,_label) => {new_position = (location.0, location.1, block.level+1)},
       _ => {panic!("non portal"); }
     }
 
@@ -252,19 +254,19 @@ fn simple_navigate_to_portal(donut : &Donut, current_location : (usize,usize,i32
       panic!("calling navigate to portal with effective last location");
     }
 
-
-    // println!("Calling navigate to portal {} with {:?} and last {:?}", block.label, new_position, Some((block.position.0,block.position.1,new_position.2)));
-    if let Some(new_distance) = simple_navigate_to_portal(&donut, new_position, Some((block.position.0,block.position.1,new_position.2)), max_len, distance_so_far + block.distance + 1) {
-      // return Some(block.distance + 1 + new_distance);
-      let candidate = new_distance;
-      if shortest_path != None {
-        if candidate < shortest_path.unwrap() {
+    if shortest_path == None || distance_so_far + block.distance + 1 <= shortest_path.unwrap() {
+      // println!("Calling navigate to portal {} with {:?} and last {:?}", block.label, new_position, Some((block.position.0,block.position.1,new_position.2)));
+      if let Some(new_distance) = simple_navigate_to_portal(&donut, new_position, Some((block.position.0,block.position.1,new_position.2)), max_len, distance_so_far + block.distance + 1) {
+        // return Some(block.distance + 1 + new_distance);
+        let candidate = new_distance;
+        if shortest_path != None {
+          if candidate < shortest_path.unwrap() {
+            shortest_path = Some(candidate);
+          }
+        } else {
           shortest_path = Some(candidate);
         }
-      } else {
-        shortest_path = Some(candidate);
       }
-
     }
   }
   return shortest_path;
@@ -348,11 +350,6 @@ fn navigate_to_portal(donut : &Donut, current_location : (usize,usize), block_hi
   return path;
 }
 
-// #[cached(
-//   type = "SizedCache<String, Option<usize>>",
-//   create = "{ SizedCache::with_size(10000) }",
-//   convert = r#"{ format!("{},{},{},{},{},{}",point_a.0,point_a.1,point_b.0, point_b.1,last.0, last.1) }"#
-// )]
 fn more_simple_path(donut : &Donut, 
   point_a : (usize,usize), 
   point_b : (usize,usize), 
@@ -552,14 +549,13 @@ pub fn solve_part2(lines : &Vec<String>) -> usize {
   let mut max = 7500;
   loop { 
     println!("trying {}", max);
-    let retval = navigate_to_portal(&donut, donut.start, &vec![],max);
-    if retval.len() == 0 {
+    let retval = simple_navigate_to_portal(&donut, (donut.start.0,donut.start.1,0), None, max, 0);
+    if retval == None {
       max += 1000;
     } else {
-      println!("path [{:?}]", retval.iter().map(|b| format!("{}{}({})",b.label.to_string(),b.level,b.distance)).collect::<Vec<String>>().join(","));
-
-      println!("part 2 {:?}", retval.iter().map(|b| b.distance).sum::<usize>());
-      return retval.iter().map(|b| b.distance).sum::<usize>();
+      println!("part 2 {:?}", retval);
+      return retval.unwrap()
     }
    }
-}
+
+  }
