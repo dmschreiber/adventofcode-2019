@@ -9,7 +9,7 @@ mod tests {
       assert!(620==super::solve_part1(&lines));
       super::solve_part2(&lines);
       println!("Complete in {:?}", start.elapsed());
-      
+
       // part 2 7366
 //        Complete in 900.929033168s
 //        part 2 Some(7366)
@@ -272,6 +272,8 @@ fn simple_navigate_to_portal(donut : &Donut, current_location : (usize,usize,i32
   return shortest_path;
 }
 
+#[allow(dead_code)]
+#[deprecated(note = "please use simple_navigate_to_portal")]
 fn navigate_to_portal(donut : &Donut, current_location : (usize,usize), block_history : &Vec<Block>, max_len : usize) -> Vec<Block> {
   let mut path : Vec<Block> = vec![];
   let mut effective_max_len = max_len;
@@ -304,7 +306,7 @@ fn navigate_to_portal(donut : &Donut, current_location : (usize,usize), block_hi
 
   let mut candidates = vec![];
 
-  if let Some(distance) = simple_path(&donut, current_location, donut.end, &vec![]) {
+  if let Some(distance) = more_simple_path(&donut, current_location, donut.end, current_location) {
     if last_level == 0 {
       let mut new_history = block_history.clone();
       new_history.push(Block{ position : donut.end, label : "ZZ".to_string(), distance, level : 0, value : '.'});
@@ -380,6 +382,8 @@ fn more_simple_path(donut : &Donut,
   return None;
 }
 
+#[deprecated(note = "please use more_simple_path")]
+#[allow(dead_code)]
 fn simple_path(donut : &Donut, 
   point_a : (usize,usize), 
   point_b : (usize,usize), 
