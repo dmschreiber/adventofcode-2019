@@ -1,20 +1,38 @@
 #[cfg(test)]
 mod tests {
       use std::time::Instant;
+
       #[test]
-    fn dec18_part1() {
+    fn dec20_part1() {
       let lines: Vec<String> = include_str!("../inputs/dec20.txt").lines().map(|s| (&*s).to_string() ).collect();
       let start = Instant::now();
       assert!(620==super::solve_part1(&lines));
       super::solve_part2(&lines);
       println!("Complete in {:?}", start.elapsed());
       // part 2 7366
-      // Complete in 1301.929033168s
+      // Complete in 900.929033168s
+    }
+
+    #[test]
+    fn dec20_playground() {
+      let lines: Vec<String> = include_str!("../inputs/dec20.txt").lines().map(|s| (&*s).to_string() ).collect();
+      let a = (1,1);
+      let b = (33,37);
+      let donut = super::load_donut(&lines);
+      let start = Instant::now();
+      println!("{:?}",super::more_simple_path(&donut, a, b, a));
+      println!("Complete in {:?}", start.elapsed());
+      let start = Instant::now();
+      println!("{:?}",super::simple_path(&donut, a, b, &vec![]));
+      println!("Complete in {:?}", start.elapsed());
     }
 }
 
 use std::collections::HashMap;
 use std::convert::TryInto;
+use cached::proc_macro::cached;
+use cached::SizedCache;
+
 
 #[derive(Debug,Clone,Eq,PartialEq,Hash)]
 pub enum Portal {
@@ -184,11 +202,15 @@ fn path(donut : &Donut,
 
 fn navigate_to_portal(donut : &Donut, current_location : (usize,usize), block_history : &Vec<Block>, max_len : usize) -> Vec<Block> {
   let mut path : Vec<Block> = vec![];
+  let mut effective_max_len = max_len;
 
   let last_level;
+  let last_3d_position;
   if let Some(last_block) = block_history.last() {
+    last_3d_position = (last_block.position.0,last_block.position.1,last_block.level);
     last_level = last_block.level;
   } else {
+    last_3d_position = (current_location.0,current_location.0,0);
     last_level = 0;
   }
 
@@ -196,8 +218,8 @@ fn navigate_to_portal(donut : &Donut, current_location : (usize,usize), block_hi
   for portals_vectors in donut.portals.values() {
     for portal in portals_vectors {
       let d = match portal {
-        Portal::Up(pos,label) => (*pos,label,simple_path(&donut, *pos, current_location, &vec![])),
-        Portal::Down(pos,label) if last_level > 0 => (*pos,label,simple_path(&donut, *pos, current_location, &vec![])),
+        Portal::Up(pos,label) => (*pos,label,more_simple_path(&donut, *pos, current_location, (last_3d_position.0,last_3d_position.1))),
+        Portal::Down(pos,label) if last_level > 0 => (*pos,label,more_simple_path(&donut, *pos, current_location, (last_3d_position.0,last_3d_position.1))),
         Portal::Down(pos,label) if last_level == 0 => (*pos,label,None),
         _ => panic!("unreachable")
       };      
@@ -213,8 +235,10 @@ fn navigate_to_portal(donut : &Donut, current_location : (usize,usize), block_hi
   if let Some(distance) = simple_path(&donut, current_location, donut.end, &vec![]) {
     if last_level == 0 {
       let mut new_history = block_history.clone();
-      println!("Found a solution [{}] history [{:?}", &new_history.iter().map(|b| b.distance).sum::<usize>(), block_history.iter().map(|b| format!("{}{}({})",b.label.to_string(),b.level,b.distance)).collect::<Vec<String>>().join(","));
       new_history.push(Block{ position : donut.end, label : "ZZ".to_string(), distance, level : 0, value : '.'});
+      println!("Found a solution [{}] history [{:?}", &new_history.iter().map(|b| b.distance).sum::<usize>(), block_history.iter().map(|b| format!("{}{}({})",b.label.to_string(),b.level,b.distance)).collect::<Vec<String>>().join(","));
+      effective_max_len = new_history.iter().map(|b| b.distance).sum::<usize>();
+      if path.len() == 0 { path = new_history.clone(); }
       candidates.push(new_history);
     }
   }
@@ -236,7 +260,7 @@ fn navigate_to_portal(donut : &Donut, current_location : (usize,usize), block_hi
       _ => {panic!("non portal"); }
     }
     if new_history.iter().map(|b| b.distance).sum::<usize>() < max_len {  
-      let candidate = navigate_to_portal(&donut, new_history.last().unwrap().position, &new_history, max_len);
+      let candidate = navigate_to_portal(&donut, new_history.last().unwrap().position, &new_history, effective_max_len);
       if candidate.len() > 0 {
         candidates.push(candidate.clone());
       }
@@ -252,6 +276,41 @@ fn navigate_to_portal(donut : &Donut, current_location : (usize,usize), block_hi
   }
 
   return path;
+}
+
+// #[cached(
+//   type = "SizedCache<String, Option<usize>>",
+//   create = "{ SizedCache::with_size(10000) }",
+//   convert = r#"{ format!("{},{},{},{},{},{}",point_a.0,point_a.1,point_b.0, point_b.1,last.0, last.1) }"#
+// )]
+fn more_simple_path(donut : &Donut, 
+  point_a : (usize,usize), 
+  point_b : (usize,usize), 
+  last : (usize,usize)) -> Option<usize> {
+  let mut min_distance = 99999;
+
+  if point_a == point_b { 
+    return Some(0); 
+  }
+
+  let neighbors = get_neighbors(&point_a);
+  // println!("history {} exploring {:?}",history.iter().map(|p| block_format(p)).collect::<String>(), neighbors);
+  for n in neighbors {
+    if let Some(n_o) = donut.map.get(&n) {
+      if !n_o.is_wall() {
+        if n != last {
+          if let Some(d) = more_simple_path(&donut, n, point_b, point_a) {
+            if d+1 < min_distance {min_distance = d+1; }
+          }
+        }
+      }
+    }
+  }
+  if min_distance < 99999 {   
+    return Some(min_distance) ;
+  }
+
+  return None;
 }
 
 fn simple_path(donut : &Donut, 
