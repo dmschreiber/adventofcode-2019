@@ -18,6 +18,7 @@ use regex::Regex;
 use std::time::Instant;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum Ops {
   NewStack,
   CutInto(i128),

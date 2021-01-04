@@ -78,7 +78,7 @@ mod tests {
 
     for (row,line) in lines.iter().enumerate() {
       for (col,value) in line.as_bytes().iter().enumerate() {
-        map.insert((row as isize,col as isize),line.as_bytes()[col] as char);
+        map.insert((row as isize,col as isize),*value as char);
       }
     }
     return map;
@@ -106,7 +106,7 @@ mod tests {
     return new_map;
   }
 
-  fn print_map(map : &HashMap<(isize,isize),char>) {
+  pub fn print_map(map : &HashMap<(isize,isize),char>) {
     for i in 0..25 {
       let row = i/5;
       let col = i % 5;
@@ -114,8 +114,9 @@ mod tests {
       print!("{}", get_spot(map, row, col));
     }
   }
+
   pub fn solve_part1(lines : &Vec<String>) -> u32 {
-    let mut retval = 0;
+    let mut retval;
     let mut history = vec![];
 
     let mut map = read_map(lines);
@@ -142,7 +143,7 @@ mod tests {
   }
 
 
-  pub fn get_part2_spot(map : &HashMap<isize,HashMap<(isize,isize),char>>, row : isize, col : isize, level : isize) -> char {
+  fn get_part2_spot(map : &HashMap<isize,HashMap<(isize,isize),char>>, row : isize, col : isize, level : isize) -> char {
     if let Some(m) = map.get(&level) {
       if let Some(b) = m.get( &( row, col ) ) {
         if *b == '#' {
@@ -245,7 +246,6 @@ mod tests {
   }
 
   pub fn solve_part2(lines : &Vec<String>, minutes : u32) -> u32 {
-    let mut retval = 0;
     let mut map = HashMap::new();
 
     map.insert(0,read_map(lines));
