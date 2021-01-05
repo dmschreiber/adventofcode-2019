@@ -18,7 +18,7 @@ public class IntcodeComputer {
     public Stack<Long> inputs = new Stack<>();
     public Stack<Long> outputs = new Stack<>();
 
-    private ArrayList<Character> ascii_buffer = new ArrayList();
+    public ArrayList<Character> ascii_buffer = new ArrayList();
     private int offsetIndex = 0;
     private int relativeBase = 0;
 
@@ -99,24 +99,23 @@ public class IntcodeComputer {
                 arg1 = (arg1_type == 0) ? program[offsetIndex + 1] : program[offsetIndex + 1] + relativeBase;
                 long number;
 
-                if (isInteractive) {
-                    if (ascii_buffer.size() > 0) {
+                if (isAscii && ascii_buffer.size() > 0) {
+                    number = ascii_buffer.get(0);
+                    ascii_buffer.remove(0);
+
+                } else if (isInteractive) {
+                    Scanner scanner = new Scanner(System.in);
+
+                    String input = scanner.nextLine();
+                    if (isAscii) {
+                        for (byte b : input.getBytes()) {
+                            ascii_buffer.add((char) b);
+                        }
+                        ascii_buffer.add((char) 10);
                         number = ascii_buffer.get(0);
                         ascii_buffer.remove(0);
                     } else {
-                        Scanner scanner = new Scanner(System.in);
-
-                        String input = scanner.nextLine();
-                        if (isAscii) {
-                            for (byte b : input.getBytes()) {
-                                ascii_buffer.add((char) b);
-                            }
-                            ascii_buffer.add((char) 10);
-                            number = ascii_buffer.get(0);
-                            ascii_buffer.remove(0);
-                        } else {
-                            number = Integer.parseInt(input);
-                        }
+                        number = Integer.parseInt(input);
                     }
                 } else {
                     number = inputs.pop();
