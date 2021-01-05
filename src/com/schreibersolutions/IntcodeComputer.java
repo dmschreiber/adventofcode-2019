@@ -1,6 +1,7 @@
 package com.schreibersolutions;
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.ArrayList;
 
 /**
  * Created by dschreiber on 12/7/19.
@@ -9,6 +10,7 @@ public class IntcodeComputer {
     public long result = 0;
     public int offset = 0;
     public boolean isInteractive = true;
+    public boolean isAscii = false;
     public long[] program = {};
     public boolean isRunning = false;
     public boolean isAwaitingInput = false;
@@ -16,6 +18,7 @@ public class IntcodeComputer {
     public Stack<Long> inputs = new Stack<>();
     public Stack<Long> outputs = new Stack<>();
 
+    private ArrayList<Character> ascii_buffer = new ArrayList();
     private int offsetIndex = 0;
     private int relativeBase = 0;
 
@@ -97,10 +100,24 @@ public class IntcodeComputer {
                 long number;
 
                 if (isInteractive) {
-                    Scanner scanner = new Scanner(System.in);
+                    if (ascii_buffer.size() > 0) {
+                        number = ascii_buffer.get(0);
+                        ascii_buffer.remove(0);
+                    } else {
+                        Scanner scanner = new Scanner(System.in);
 
-                    String input = scanner.nextLine();
-                    number = Integer.parseInt(input);
+                        String input = scanner.nextLine();
+                        if (isAscii) {
+                            for (byte b : input.getBytes()) {
+                                ascii_buffer.add((char) b);
+                            }
+                            ascii_buffer.add((char) 10);
+                            number = ascii_buffer.get(0);
+                            ascii_buffer.remove(0);
+                        } else {
+                            number = Integer.parseInt(input);
+                        }
+                    }
                 } else {
                     number = inputs.pop();
                 }
@@ -114,7 +131,11 @@ public class IntcodeComputer {
                 arg1 = getArgument(arg1_type, program[offsetIndex + 1]);
 
                 if (isInteractive) {
-                    System.out.println(arg1);
+                    if (isAscii && arg1 <= 127 ) {
+                        System.out.print(Character.toString((char) arg1));
+                    } else {
+                        System.out.println(arg1);
+                    }
                 } else {
                     outputs.push(arg1);
                 }
