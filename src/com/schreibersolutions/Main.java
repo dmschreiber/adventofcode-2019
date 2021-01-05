@@ -243,25 +243,25 @@ public class Main {
         System.out.println(c.traverse(main,f_a,f_b,f_c));
     }
 
-    public void dec18() {
-        CameraSurface s = new CameraSurface(0);
-
-        try {
-            s.readFromFile("/Users/dschreiber/Projects/advent-of-code/dec18.txt");
-        } catch (Exception e) {
-            System.err.printf("Error: %s\n", e.getMessage());
+    public void dec19() {
+        TractorBeam beam = new TractorBeam();
+        beam.draw();
+        System.out.println(beam.findSquare(4));
+        if (beam.findSquare(4).equals("340013")) {
+            System.out.println("Success");
+            long startTime = System.currentTimeMillis();
+            String result = beam.findSquare(100);
+            long endTime = System.currentTimeMillis();
+            long duration = (endTime - startTime);
+            System.out.printf("Answer to part 2 %s in %d ms\n",result, duration);
+        } else {
+            System.out.println("Fail");
+            return;
         }
-
-        s.displayCamera();
-
-        // vaultState.init(s); // load keys, doors and location & remove them from the surface map
-        // vaultSolver.solve(s,vaultState); // for each key, find the path.setps and then explore from there.
-        
-
     }
     public static void main(String[] args) {
         Main m = new Main();
-        m.dec18();
+        m.dec19();
 
     }
 }
