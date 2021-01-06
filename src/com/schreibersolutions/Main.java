@@ -266,9 +266,17 @@ public class Main {
         d.run();
     }
 
+    public void dec23() {
+        Network n = new Network();
+        n.run();
+
+        n = new Network();
+        n.run_part2();
+
+    }
     public static void main(String[] args) {
         Main m = new Main();
-        m.dec21();
+        m.dec23();
 
     }
 }

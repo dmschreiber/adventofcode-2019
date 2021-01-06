@@ -48,8 +48,24 @@ public class SpringDroid {
     void solve_part2(String input) {
 
     }
+    void interactive_run() {
+        init();
+        computer.run();
+        while (computer.outputs.size() > 0)
+        {
 
+            for (int i = 0; i < computer.outputs.size(); i++) {
+                long result = computer.outputs.get(i);
+                char c = (char) result;
+                System.out.print(Character.toString(c));
+            }
+            computer.outputs.clear();
+            computer.resume();
+        }
+
+    }
     void run() {
+//        interactive_run();
         run_with_input("NOT C J\nNOT A T\nOR T J\nAND D J\nWALK\n");
         run_with_input("NOT C J\nNOT B T\nOR T J\nNOT A T\nOR T J\nOR E T\nOR H T\nAND T J\nAND D J\nRUN\n");
 
