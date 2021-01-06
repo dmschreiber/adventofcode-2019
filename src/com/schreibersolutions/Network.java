@@ -61,11 +61,11 @@ public class Network {
                 isIdle[address] = (isIdle[address] && computer[address].outputs.size() == 0);
 
                 boolean should_stop = collect_output(address);
-                if (should_stop && !enableNAT) { return true; }
+                if (should_stop ) { return true; }
             } else {
                 isIdle[address] = (isIdle[address] && computer[address].outputs.size() == 0);
                 boolean should_stop = collect_output(address);
-                if (should_stop && !enableNAT) { return true; }
+                if (should_stop ) { return true; }
             }
         } else {
             System.out.printf("Computer %d not running\n", address);
@@ -75,6 +75,7 @@ public class Network {
     }
 
     int runAllCount = 0;
+    int idleCount = 0;
     boolean run_all() {
         boolean should_stop = false;
 
@@ -86,10 +87,13 @@ public class Network {
         }
 
         if (isIdle) {
-            System.out.printf("Idle ");
+            ++idleCount;
+            System.out.printf("Idle %d\n", idleCount);
+        }else {
+            idleCount = 0;
         }
 
-        if (isIdle && enableNAT) {
+        if (idleCount > 1 && enableNAT) {
             // network is idle
             System.out.printf("NAT sending %d (previous %d)\n", this.final_y, this.previous_final_y);
             should_stop = should_stop || send_input(new Packet(0, 255l, this.final_x, this.final_y));
@@ -121,8 +125,8 @@ public class Network {
 
     boolean send_input(Packet p) {
         if (p.destination_address == 255) {
-            System.out.printf("Received NAT packet %d to %d\n", p.source_address, p.destination_address);
-
+            System.out.printf("Received NAT packet %d to %d (%d)\n", p.source_address, p.destination_address, p.y);
+            if (p.y == this.previous_final_y) {  return true; }
             final_x = p.x;
             final_y = p.y;
             if (!this.enableNAT) {
@@ -135,7 +139,7 @@ public class Network {
             if (p.y == this.previous_final_y) {
                 return true;
             } else {
-                this.previous_final_y = p.y;
+                this.previous_final_y = final_y;
             }
         }
         IntcodeComputer c = computer[(int) p.destination_address];
@@ -167,6 +171,7 @@ public class Network {
         System.out.printf("First value delivered by NAT twice x,y is %d, %d\n", final_x, final_y);
         // guessed 2251799 is too high
         // guessed 13287 is too high
+        if (final_y != 13286) { System.err.println("part 2 failed"); System.exit(-1); }
 
     }
 }
