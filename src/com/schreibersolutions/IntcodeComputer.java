@@ -20,6 +20,7 @@ public class IntcodeComputer {
     public Stack<Long> outputs = new Stack<>();
 
     public ArrayList<Character> ascii_buffer = new ArrayList();
+    public String AsciiOutputHistory;
     private int offsetIndex = 0;
     private int relativeBase = 0;
 
@@ -67,7 +68,7 @@ public class IntcodeComputer {
         arg3_type = ((program[offsetIndex]/10000) % 10);
 
         isAwaitingInput = false;
-        if ((opCode == 3) && (inputs.size() == 0) && !(isInteractive)) { // suspend until we get input and resume
+        if ((opCode == 3) && (inputs.size() == 0) && (ascii_buffer.size() == 0) && !(isInteractive)) { // suspend until we get input and resume
             isAwaitingInput = true;
             offset = -2;
         } else if ((outputs.size() >= outputBatchSize)) {
@@ -133,11 +134,17 @@ public class IntcodeComputer {
                 if (isInteractive) {
                     if (isAscii && arg1 <= 127 ) {
                         System.out.print(Character.toString((char) arg1));
+                        AsciiOutputHistory += Character.toString((char) arg1);
                     } else {
                         System.out.println(arg1);
                     }
                 } else {
-                    outputs.push(arg1);
+                    if (isAscii && arg1 <= 127 ) {
+                        System.out.print(Character.toString((char) arg1));
+                        AsciiOutputHistory += Character.toString((char) arg1);
+                    } else {
+                        outputs.push(arg1);
+                    }
                 }
                 offset = 2;
 

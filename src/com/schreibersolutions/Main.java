@@ -274,9 +274,13 @@ public class Main {
         n.run_part2();
 
     }
+    public void dec25() {
+        Droid d = new Droid();
+        d.run();
+    }
     public static void main(String[] args) {
         Main m = new Main();
-        m.dec23();
+        m.dec25();
 
     }
 }
